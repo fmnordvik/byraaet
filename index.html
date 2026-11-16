@@ -87,6 +87,10 @@ label{display:block;color:var(--muted);margin:8px 0 3px}
 .wrap.narrow .panel{position:static}
 .wrap.narrow .dialog canvas{width:64px;height:64px}
 .panel canvas#banner{display:block;width:min(100%,480px);height:auto;image-rendering:pixelated;image-rendering:crisp-edges;border:3px solid var(--line);margin-bottom:12px}
+.tcols{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:flex-start}
+.tcols canvas#banner{flex:0 1 300px;width:300px;margin:0}
+.tbody{flex:1 1 300px;min-width:0}
+.tbody h1{font-size:clamp(32px,5vw,48px)}
 @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
 </style>
 
@@ -552,7 +556,7 @@ function fit(){const wrap=$('wrap'),avail=wrap.parentElement.clientWidth-(parseF
   let s=Math.floor(avail/W);const hs=Math.floor((window.innerHeight-150)/H);if(hs>=2)s=Math.min(s,hs);s=Math.min(s,4);
   wrap.style.width=s>=2?(W*s+6)+'px':'100%';wrap.classList.toggle('narrow',avail<700);}
 window.addEventListener('resize',fit);fit();
-function title(){showPanel('<canvas id="banner" width="192" height="72" aria-hidden="true"></canvas><h1>BYRÅET</h1><p style="font-size:26px">En arbeidsdag hos Fjordvik Regnskap AS</p><p class="sub">Du er ny regnskapsfører. I dag møter du en gründer som vil ha råd, en bunke bilag og en kunde som ber om en tjeneste. Valgene dine påvirker kundetillit, faglig kvalitet og integritet. En runde tar 20–30 minutter.</p><label for="pname">Navn eller kandidatnummer (valgfritt, kommer med i rapporten)</label><input type="text" id="pname" maxlength="60" autocomplete="off"><div class="row"><button class="btn" id="go" type="button">Start dagen ▶</button></div><p class="sub">Prøveversjon. Det faglige innholdet er ikke kvalitetssikret.</p>',true);drawBanner();
+function title(){showPanel('<div class="tcols"><canvas id="banner" width="192" height="72" aria-hidden="true"></canvas><div class="tbody"><h1>BYRÅET</h1><p style="font-size:24px;margin:2px 0 6px">En arbeidsdag hos Fjordvik Regnskap AS</p><label for="pname">Navn eller kandidatnummer (valgfritt)</label><input type="text" id="pname" maxlength="60" autocomplete="off"><div class="row"><button class="btn" id="go" type="button">Start dagen ▶</button></div><p class="sub">Du møter en gründer som vil ha råd, en bunke bilag og en kunde som ber om en tjeneste. En runde tar 20–30 minutter. Prøveversjon: fagstoffet er ikke kvalitetssikret.</p></div></div>',true);drawBanner();
   $('go').addEventListener('click',()=>{playerName=$('pname').value.trim();sfx.open();hidePanel();started=true;day();});}
 requestAnimationFrame(frame);
 if(location.hash==='#demo'){started=true;P.x=P.tx=20;P.y=P.ty=5;npcs[2].present=true;setClock(600);setObj('Møt Selma Aune på møterommet til venstre','selma');choose('du','Selma ser spent på deg. Hva anbefaler du?',['Jeg anbefaler aksjeselskap.','Jeg anbefaler enkeltpersonforetak.','Dette kan jeg ikke gi råd om. Du bør snakke med en advokat.']);}
