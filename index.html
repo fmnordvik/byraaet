@@ -560,9 +560,11 @@ function fit(){const wrap=$('wrap'),st=$('stage'),cs=getComputedStyle(document.b
     let n=Math.min(availW,(window.innerHeight-over)*W/H,W*4);if(n>=W*2)n=Math.floor(n/(W/2))*(W/2);n=Math.max(n,Math.min(availW,460));
     if(n===w)break;w=n;}
   wrap.style.width=(w+6)+'px';wrap.classList.toggle('narrow',w<700);}
-window.addEventListener('resize',fit);fit();
-function title(){showPanel('<div class="tcols"><canvas id="banner" width="192" height="72" aria-hidden="true"></canvas><div class="tbody"><h1>BYRÅET</h1><p style="font-size:24px;margin:2px 0 6px">En arbeidsdag hos Fjordvik Regnskap AS</p><label for="pname">Navn eller kandidatnummer (valgfritt)</label><input type="text" id="pname" maxlength="60" autocomplete="off"><div class="row"><button class="btn" id="go" type="button">Start dagen ▶</button></div><p class="sub">En runde tar 20–30 minutter. Prøveversjon: fagstoffet er ikke kvalitetssikret.</p></div></div>',true);drawBanner();
-  $('go').addEventListener('click',()=>{playerName=$('pname').value.trim();sfx.open();hidePanel();started=true;day();});}
+let titleOpen=false;
+function shrinkToFit(){if(!titleOpen)return;const p=$('panel'),c=p.firstElementChild;if(!c)return;c.style.zoom='';if($('wrap').classList.contains('narrow'))return;const room=p.clientHeight-40;if(c.offsetHeight>room)c.style.zoom=Math.max(0.55,room/c.offsetHeight).toFixed(3);}
+window.addEventListener('resize',()=>{fit();shrinkToFit();});fit();
+function title(){showPanel('<div class="tcols"><canvas id="banner" width="192" height="72" aria-hidden="true"></canvas><div class="tbody"><h1>BYRÅET</h1><p style="font-size:24px;margin:2px 0 6px">En arbeidsdag hos Fjordvik Regnskap AS</p><label for="pname">Navn eller kandidatnummer (valgfritt)</label><input type="text" id="pname" maxlength="60" autocomplete="off"><div class="row"><button class="btn" id="go" type="button">Start dagen ▶</button></div><p class="sub">En runde tar 20–30 minutter. Prøveversjon: fagstoffet er ikke kvalitetssikret.</p></div></div>',true);drawBanner();titleOpen=true;shrinkToFit();setTimeout(shrinkToFit,700);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(shrinkToFit);
+  $('go').addEventListener('click',()=>{playerName=$('pname').value.trim();titleOpen=false;sfx.open();hidePanel();started=true;day();});}
 requestAnimationFrame(frame);
 if(location.hash==='#demo'){started=true;P.x=P.tx=20;P.y=P.ty=5;npcs[2].present=true;setClock(600);setObj('Møt Selma Aune på møterommet til venstre','selma');choose('du','Selma ser spent på deg. Hva anbefaler du?',['Jeg anbefaler aksjeselskap.','Jeg anbefaler enkeltpersonforetak.','Dette kan jeg ikke gi råd om. Du bør snakke med en advokat.']);}
 else title();
