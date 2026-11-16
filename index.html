@@ -359,7 +359,8 @@ const M={tillit:50,kvalitet:50,integritet:50};
 function setClock(m){clock=m;const hh=String(Math.floor(m/60)).padStart(2,'0'),mm=String(m%60).padStart(2,'0');$('clock').textContent='MAN '+hh+':'+mm;}
 function tick(m){setClock(clock+m);}
 function setObj(text,id){$('obj').innerHTML='<b>Mål:</b> '+esc(text);target=id||null;}
-function adj(d){let net=0;for(const k in d){M[k]=Math.max(0,Math.min(100,M[k]+d[k]));net+=d[k];const el=$('m-'+k);el.querySelector('i').style.width=M[k]+'%';el.querySelector('.bar').classList.toggle('low',M[k]<35);el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),900);}if(net>0)sfx.up();else if(net<0)sfx.down();}
+const SCALE={tillit:1,kvalitet:0.6,integritet:0.85};
+function adj(d){let net=0;for(const k in d){const v=Math.round(d[k]*SCALE[k]);M[k]=Math.max(0,Math.min(100,M[k]+v));net+=v;const el=$('m-'+k);el.querySelector('i').style.width=M[k]+'%';el.querySelector('.bar').classList.toggle('low',M[k]<35);el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),900);}if(net>0)sfx.up();else if(net<0)sfx.down();}
 
 /* ---------- dialogue ---------- */
 let advance=null,typer=null,optHandlers=null;
@@ -421,7 +422,9 @@ async function day(){
   await waitFor('desk');await case2();
   stage=3;setClock(Math.max(clock,840));ringing=true;sfx.ring();const ringT=setInterval(()=>{if(ringing&&canMove())sfx.ring();},2600);setObj('Telefonen ringer. Ta den på pulten din','desk');
   await waitFor('desk');ringing=false;clearInterval(ringT);await case3();
-  stage=4;setClock(960);setObj('Arbeidsdagen er over',null);report();
+  stage=4;setClock(960);setObj('Arbeidsdagen er over',null);
+  if(F.backdated)adj({tillit:-30});else if(F.randi===1)adj({tillit:10});
+  report();
 }
 
 async function case1(){const from=LOG.length;
