@@ -87,9 +87,9 @@ label{display:block;color:var(--muted);margin:8px 0 3px}
 .wrap.narrow .panel{position:static}
 .wrap.narrow .dialog canvas{width:64px;height:64px}
 .panel canvas#banner{display:block;width:min(100%,480px);height:auto;image-rendering:pixelated;image-rendering:crisp-edges;border:3px solid var(--line);margin-bottom:12px}
-.tcols{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:flex-start}
-.tcols canvas#banner{flex:0 1 300px;width:300px;margin:0}
-.tbody{flex:1 1 300px;min-width:0}
+.tcols{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center}
+.tcols canvas#banner{flex:1 1 340px;width:auto;max-width:576px;min-width:0;margin:0}
+.tbody{flex:1 1 280px;min-width:0}
 .tbody h1{font-size:clamp(32px,5vw,48px)}
 @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
 </style>
