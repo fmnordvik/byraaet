@@ -155,14 +155,17 @@ const PAL={
   jonas:{skin:'#eec3a0',hair:'#c2622d',shirt:'#3f9d6b',shirt2:'#2f7d54',pants:'#3a4654',shoe:'#151a22',bg:'#234a3a',beard:true},
   selma:{skin:'#c98f66',hair:'#1c1a22',shirt:'#d9a23a',shirt2:'#f3ecd6',pants:'#5a4636',shoe:'#151a22',bg:'#5a4320',long:true,apron:true},
   tor:{skin:'#e3b08c',hair:'#6b5a48',shirt:'#e8742c',shirt2:'#f2d13b',pants:'#22303f',shoe:'#151a22',bg:'#3a4654',cap:'#f2d13b',stubble:true},
+  ingrid:{skin:'#f2cdb0',hair:'#d9b45c',shirt:'#7a5aa8',shirt2:'#5d4486',pants:'#2b3344',shoe:'#151a22',bg:'#3d2f5a',long:true},
+  arvid:{skin:'#e0ae8a',hair:'#4a4a52',shirt:'#2b4a6b',shirt2:'#f2d13b',pants:'#22303f',shoe:'#151a22',bg:'#22384d',cap:'#2e5f9e',stubble:true},
+  geir:{skin:'#e6b896',hair:'#2a2622',shirt:'#566676',shirt2:'#3a4654',pants:'#22303f',shoe:'#151a22',bg:'#3a4654',beard:true,glasses:true},
   ingen:{bg:'#234256'}
 };
-const NAMES={du:'Du',randi:'Randi Fjordvik, daglig leder',jonas:'Jonas, kollega',selma:'Selma Aune, gründer',tor:'Tor Bråten, Bråten Bygg AS (telefon)',ingen:''};
+const NAMES={du:'Du',randi:'Randi Fjordvik, daglig leder',jonas:'Jonas, kollega',selma:'Selma Aune, gründer',tor:'Tor Bråten, Bråten Bygg AS (telefon)',ingrid:'Ingrid Holm, Holm Garn AS',arvid:'Arvid Nes, Nes Rør AS',geir:'Geir Vestby, Vestby Bil AS (telefon)',ingen:''};
 const npcs=[{id:'randi',x:20,y:3},{id:'jonas',x:13,y:3},{id:'selma',x:3,y:4,present:false}];
 const things={
   randi:{cells:[[20,3],[19,4],[20,4],[21,4]],label:'Snakk med Randi'},
   jonas:{cells:[[13,3],[13,4],[14,4]],label:'Snakk med Jonas'},
-  selma:{cells:[[3,4],[2,5],[3,5],[4,5],[2,6],[3,6],[4,6]],label:'Snakk med Selma',present:()=>npcs[2].present},
+  kunde:{cells:[[3,4],[2,5],[3,5],[4,5],[2,6],[3,6],[4,6]],label:'Snakk med kunden',present:()=>npcs[2].present},
   desk:{cells:[[9,4],[10,4]],label:'Bruk pulten din'},
   coffee:{cells:[[15,2]],label:'Ta en kaffe'}
 };
@@ -314,7 +317,7 @@ function drawBanner(){const c=$('banner').getContext('2d');c.imageSmoothingEnabl
 
 /* ---------- face-to-face scenes ---------- */
 let scene=null;
-const SCENES={selma:'meet',randi:'boss',jonas:'office',tor:'site'};
+const SCENES={selma:'meet',ingrid:'meet',arvid:'meet',randi:'boss',jonas:'office',tor:'site',geir:'garage'};
 const bustCache={},bdCache={};
 function paintBust(c,p,mood,blink,talk){const sk=p.skin,sd=tint(sk,-30),sl=tint(sk,-14),h=p.hair,hd=tint(h,-34),hl=tint(h,30),e='#22222a',m='#7a352e';
   R(c,6,58,48,20,p.shirt);R(c,10,54,40,4,p.shirt);R(c,14,52,32,2,p.shirt);R(c,44,56,10,22,p.shirt2);
@@ -361,6 +364,12 @@ function backdrop(kind){if(bdCache[kind])return bdCache[kind];const cnv=document
     R(c,0,6,150,108,'#4a3223');R(c,4,10,142,102,'#2e1f15');binders(c,7,13,23,3,33);for(let r=0;r<3;r++)R(c,4,42+r*33,142,3,'#4a3223');
     R(c,160,26,44,34,'#c9a24a');R(c,164,30,36,26,'#f3ecd6');R(c,170,36,24,2,'#3a4654');R(c,170,42,24,2,'#3a4654');R(c,180,48,5,5,'#a8423f');
     R(c,232,10,144,88,'#8a9aa3');c.clearRect(236,14,136,80);R(c,303,14,2,80,'#8a9aa3');R(c,230,98,148,4,'#eef3f1');
+  }else if(kind==='garage'){
+    R(c,0,0,W,H,'#9aa6ab');R(c,0,0,W,8,'#566676');R(c,0,150,W,58,'#6f777c');R(c,0,150,W,2,'#8d979c');
+    R(c,150,22,150,84,'#566676');c.clearRect(154,26,142,76);R(c,224,26,2,76,'#566676');R(c,154,84,142,18,'#7d868b');
+    [[162,'#c0392b'],[234,'#2e86ab']].forEach(([x,col])=>{R(c,x,70,44,16,col);R(c,x+9,61,26,10,col);R(c,x+12,63,8,7,'#bfeaf6');R(c,x+23,63,8,7,'#bfeaf6');R(c,x+5,84,9,7,'#17171f');R(c,x+30,84,9,7,'#17171f');});
+    R(c,312,20,66,132,'#3a4654');for(let r=0;r<4;r++)for(let i=0;i<2;i++){R(c,318+i*29,26+r*31,25,25,'#17171f');R(c,324+i*29,32+r*31,13,13,'#566676');R(c,328+i*29,36+r*31,5,5,'#b9c5c2');}
+    R(c,160,114,58,28,'#f2d13b');R(c,164,119,34,3,'#22222a');R(c,164,126,46,3,'#22222a');R(c,164,133,24,3,'#22222a');
   }else{
     for(let i=0;i<W;i++){const hh=Math.round(14+8*Math.sin(i*0.05)+4*Math.sin(i*0.13+1));R(c,i,150-hh,1,hh,'#3d5266');}
     R(c,0,150,W,58,'#6b5a48');R(c,0,150,W,2,'#8a765e');for(let i=0;i<160;i++)R(c,(i*53)%W,154+(i*17)%50,2,1,i%3?'#5a4a3a':'#8a765e');
@@ -369,7 +378,7 @@ function backdrop(kind){if(bdCache[kind])return bdCache[kind];const cnv=document
     R(c,100,132,40,20,'#e8742c');R(c,104,126,32,8,'#e8742c');R(c,108,150,8,6,'#22222a');R(c,126,150,8,6,'#22222a');
   }
   return bdCache[kind]=cnv;}
-const SKYBOX={meet:[8,12,142,88,1],office:[8,12,142,88,1],boss:[236,14,136,80,1],site:[0,0,W,150,0]};
+const SKYBOX={meet:[8,12,142,88,1],office:[8,12,142,88,1],boss:[236,14,136,80,1],site:[0,0,W,150,0],garage:[154,26,142,76,0]};
 function sceneSky(x,y,w,h,water){const [top,low]=skyAt(clock),d=dark(),hz=Math.round(h*(water?0.66:1));R(g,x,y,w,Math.round(hz*0.6),top);R(g,x,y+Math.round(hz*0.6),w,hz-Math.round(hz*0.6),low);
   if(d<0.6)for(let k=0;k<3;k++){const cx=(anim*1.5+k*97+x)%(w+40)-20;if(cx>0&&cx<w-22){R(g,x+cx,y+8+k*9,22,4,'rgba(255,255,255,.7)');R(g,x+cx+5,y+5+k*9,12,3,'rgba(255,255,255,.7)');}}
   if(d>0.5)for(let k=0;k<9;k++)R(g,x+(k*41)%w,y+3+(k*13)%Math.max(8,Math.round(hz*0.4)),1,1,'#f6f8f7');
@@ -377,7 +386,7 @@ function sceneSky(x,y,w,h,water){const [top,low]=skyAt(clock),d=dark(),hz=Math.r
     R(g,x,y+hz,w,h-hz,d>0.5?'#182544':'#4d7fa8');for(let i=2;i<w;i+=9)R(g,x+((i+Math.floor(anim))%w),y+hz+3+(i%4)*6,6,1,d>0.5?'#2a3b66':'#79a6c9');if(d>0.4)for(let i=6;i<w;i+=13)R(g,x+i,y+hz-2,2,2,'#f2d13b');}}
 function drawScene(){const kind=SCENES[scene.who],sb=SKYBOX[kind],d=dark();sceneSky(sb[0],sb[1],sb[2],sb[3],sb[4]);g.drawImage(backdrop(kind),0,0);
   const talk=!!typer&&scene.speaking&&Math.floor(anim*2.6)%2===0,blink=Math.floor(anim*2)%17===0,bob=Math.floor(anim/5)%2;
-  g.drawImage(bust(scene.who,scene.mood,blink,talk),0,0,60,78,18,(kind==='site'?24:12)+bob,120,156);
+  g.drawImage(bust(scene.who,scene.mood,blink,talk),0,0,60,78,18,(kind==='site'||kind==='garage'?24:12)+bob,120,156);
   if(kind==='meet'){R(g,0,162,W,46,'#d9a66b');R(g,0,162,W,2,'#eec48e');R(g,0,173,W,1,'#cf9b60');R(g,0,203,W,5,'#a8743f');
     R(g,146,150,14,14,'#f3ecd6');R(g,148,151,10,3,'#6b4a33');R(g,160,154,3,6,'#f3ecd6');const st=Math.floor(anim*1.5)%4;R(g,151+(st%2),145-st,2,3,'rgba(255,255,255,.55)');
     R(g,36,170,74,26,'#d9a23a');R(g,42,167,62,22,'#ffffff');for(let i=0;i<4;i++)R(g,46,171+i*4,i===3?30:54,1,'#9fb6c2');R(g,112,178,24,3,'#2e86ab');}
@@ -462,7 +471,7 @@ function closeDialog(){scene=null;$('stage').classList.remove('scene');$('dialog
 function type(text,done){const el=$('dtext');clearInterval(typer);let i=0;el.textContent='';const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const fin=()=>{clearInterval(typer);typer=null;el.textContent=text;if(done)done();};if(reduce){fin();return fin;}
   typer=setInterval(()=>{i+=2;el.textContent=text.slice(0,i);if(i%6===0)sfx.blip();if(i>=text.length)fin();},18);return fin;}
-function say(who,text){return new Promise(res=>{openDialog(who,moodFor(text));$('dopts').innerHTML='';$('dnext').hidden=false;optHandlers=null;const fin=type(text);
+function say(who,text,mood){return new Promise(res=>{openDialog(who,mood||moodFor(text));$('dopts').innerHTML='';$('dnext').hidden=false;optHandlers=null;const fin=type(text);
   advance=()=>{if(typer){fin();return;}advance=null;res();};});}
 function choose(who,text,options){return new Promise(res=>{openDialog(who);$('dnext').hidden=true;advance=null;const box=$('dopts');box.innerHTML='';
   type(text,()=>{optHandlers=[];options.forEach((o,i)=>{const label=typeof o==='string'?o:o.t;const bt=document.createElement('button');bt.type='button';bt.className='opt'+(o.used?' used':'');bt.innerHTML='<span class="k">'+(i+1)+'</span>'+esc(label);
@@ -492,172 +501,398 @@ async function feedback(title,from){showPanel('<h2>'+esc(title)+'</h2>'+fbHtml(L
 /* ---------- ambient interactions ---------- */
 let stage=0,coffees=0;
 const ambient={
-  jonas:async()=>{const lines=['Velkommen! Kaffemaskinen står borte ved veggen. Den er det viktigste verktøyet vi har.','Nye kunder er hyggelige. Husk at vi ikke kan begynne å føre for noen før kundekontrollen og oppdragsavtalen er på plass.','Bråten-bilagene, ja. Tor er grei, men han tøyer strikken. Spør heller én gang for mye.','Tor står for en femdel av omsetningen vår. Randi liker ikke at vi krangler med ham. Det betyr ikke at han har rett.','Ferdig for dagen? Skriv ned hva du gjorde og hvorfor. Det er det du blir glad for å ha om et år.'];await say('jonas',lines[Math.min(stage,lines.length-1)]);},
+  jonas:async()=>{const d=DAY||{a:{},b:{},e:{}},lines=['Velkommen! Kaffemaskinen står borte ved veggen. Den er det viktigste verktøyet vi har.',d.a.jonas||'Nye kunder er hyggelige.',d.b.jonas||'Spør heller én gang for mye.',d.e.jonas||'Si fra hvis du står fast.','Ferdig for dagen? Skriv ned hva du gjorde og hvorfor. Det er det du blir glad for å ha om et år.'];await say('jonas',lines[Math.min(stage,lines.length-1)]);},
   coffee:async()=>{coffees++;tick(5);await say('ingen',coffees===1?'Du tar en kopp kaffe. Den er bedre enn ventet.':coffees<4?'Enda en kopp. Klokka går.':'Du har drukket nok kaffe i dag.');},
   desk:async()=>{await say('ingen','Innboksen er tom akkurat nå.');},
   randi:async()=>{await say('randi',stage<4?'Si fra hvis du står fast. Jeg sitter her.':'Bra jobbet i dag.');},
-  selma:async()=>{await say('selma','Takk for hjelpen så langt!');}
+  kunde:async()=>{await say(npcs[2].id,'Takk for hjelpen så langt!','glad');}
 };
 
 /* ---------- the day ---------- */
-const F={};let playerName='';
-async function day(){
-  await say('ingen','Mandag i november, klokka 08:00. Det er første uka di som regnskapsfører hos Fjordvik Regnskap AS.');
+const F={};let playerName='',DAY=null;
+const PROF={fakta:[],dok:[],press:[],alt:[]};
+function mark(k,ok,g,b){PROF[k].push({ok:!!ok,t:ok?g:b});}
+const LU={raad:'6093 · kan gi råd til klienter fra oppstart til avslutning av en bedrift',analyse:'6093 · kan analysere drift og utvikling av en bedrift',offentlig:'6093 · kan gi råd til klienter om alle vesentlige forhold en bedrift skal kjenne til i forhold til offentlige regler og tjenester',rutiner:'6093 · kan gi rådgiving ved oppretting av rutiner hos klientene',
+  grfs:'6091 · kan anvende regler om rettigheter og plikter og god regnskapsføringsskikk, herunder risiko- og hvitvaskingsregelverk',trans:'6091 · kan behandle og registrere transaksjoner og virksomhetshendelser',mva:'6018 · kan beregne korrekt merverdiavgift med henvisning til hjemmel',lojal:'6018 · forstår betydningen av korrekt og lojal angivelse av grunnlaget for skatt og merverdiavgift',
+  manip:'6090 · har kjennskap til etiske regnskapsfaglige problemstillinger, herunder grensen mot regnskapsmanipulasjon',etikk:'6366 · kan identifisere og analysere etiske dilemmaer og foreta godt begrunnede valg'};
+function panelChoice(title,left,text,opts){showPanel('<h2>'+esc(title)+'</h2><div class="cols"><div class="left">'+left+'</div><div class="right"><p>'+esc(text)+'</p><p class="sub">Hva gjør du?</p><div class="dopts" id="bo"></div><div id="bfb"></div></div></div>');
+  return new Promise(res=>{optHandlers=[];opts.forEach((t,k)=>{const bt=document.createElement('button');bt.type='button';bt.className='opt';bt.innerHTML='<span class="k">'+(k+1)+'</span>'+esc(t);const h=()=>{sfx.pick();optHandlers=null;$('bo').innerHTML='<p><span class="sub">Du valgte:</span> '+esc(t)+'</p>';res(k);};bt.addEventListener('click',h);optHandlers.push(h);$('bo').appendChild(bt);});});}
+
+/* ----- bank 1: rådgivning ----- */
+async function runAdvice(C){const from=LOG.length,w=C.who;
+  await say(w,C.open,'glad');
+  const a=await choose('du','Hva svarer du?',C.first.o),fg=a===C.first.ok;
+  if(fg){adj({kvalitet:8,tillit:5});await say(w,C.first.yes,'glad');}
+  else{adj({kvalitet:-10});await say(w,C.first.no,'urolig');await say('du','Det har du rett i. La meg stille noen spørsmål først.');}
+  logItem({title:C.label+': første svar',choice:C.first.o[a],v:fg?'good':'bad',why:fg?C.first.good:C.first.bad,lu:C.lu});
+  mark('fakta',fg,C.first.mg,C.first.mb);
+  const qs=C.qs.map(q=>Object.assign({},q));let left=3,key=false;
+  while(left>0){const list=qs.filter(q=>!q.done);const i=await choose('du','Du har tid til '+left+' spørsmål til.',list.map(q=>q.t).concat(['Jeg har det jeg trenger.']));
+    if(i===list.length)break;const q=list[i];q.done=true;left--;tick(10);if(q.key)key=true;await say(w,q.r,q.fun?'glad':(q.m||'n'));if(q.fun)adj({tillit:4});else adj({kvalitet:3});}
+  mark('fakta',key,C.keyG,C.keyB);
+  const r=await choose('du',C.rec.prompt,C.rec.o);closeDialog();
+  const reason=await askReason(1,'Begrunn rådet til '+C.short,C.rec.o[r]);
+  const rs=C.rec.res[r],good=r===C.rec.ok;
+  adj(good&&!key?rs.adjNoKey:rs.adj);await say(w,rs.line,rs.m);
+  logItem({title:C.label+': anbefalingen',choice:C.rec.o[r],reason,v:good?(key?'good':'mid'):'bad',why:(good&&!key?C.rec.noKey:rs.why)+C.rec.tail,lu:C.lu});
+  mark('alt',good,C.rec.mg,rs.mb);
+  const fo=C.follow;await say(w,fo.ask);
+  const o=await choose('du','Hva svarer du?',fo.o),og=o===fo.ok;
+  adj(og?{integritet:8,kvalitet:8}:{integritet:-10,kvalitet:-8,tillit:3});await say(w,og?fo.yes:fo.no,'glad');
+  logItem({title:fo.title,choice:fo.o[o],v:og?'good':'bad',why:fo.why,lu:fo.lu});
+  mark(fo.skill,og,fo.mg,fo.mb);
+  closeDialog();await feedback('Tilbakemelding: møtet med '+C.short,from);}
+const ADVICE=[
+ {who:'selma',name:'Selma Aune',short:'Selma',title:'Selma Aune: valg av selskapsform',label:'Råd om selskapsform',lu:LU.raad,
+  brief:'Klokka ni kommer Selma Aune. Hun skal starte bakeri og vil ha råd om selskapsform. Hun venter på møterommet.',
+  jonas:'Nye kunder er hyggelige. Husk at vi ikke kan begynne å føre for noen før kundekontrollen og oppdragsavtalen er på plass.',
+  open:'Hei! Jeg skal åpne bakeri i sentrum, Aune Surdeig. Naboen min sier at jeg må ha AS fordi det gir lavere skatt. Stemmer det?',
+  first:{o:['AS. Det er nesten alltid det beste valget.','Det kommer an på situasjonen din. Kan jeg stille noen spørsmål først?','Enkeltpersonforetak. Det er billigst og enklest å starte.'],ok:1,
+   yes:'Ja, selvfølgelig. Spør i vei.',no:'Å? Hvorfor det? Du vet jo ikke noe om planene mine ennå.',
+   good:'Et råd må bygge på kundens faktiske situasjon. Du kartla før du konkluderte.',bad:'Du konkluderte før du kjente risiko, finansiering og behov. Rådet kan bli riktig, men bare ved flaks.',
+   mg:'Du stilte spørsmål før du svarte Selma.',mb:'Du svarte Selma før du kjente situasjonen hennes.'},
+  qs:[{key:1,t:'Hva må du investere, og hvordan skal du finansiere det?',r:'Jeg må låne 600 000 kroner til ovn og innredning. Og jeg binder meg til en leiekontrakt på fem år.'},
+   {key:1,t:'Skal du ha ansatte?',r:'To på deltid fra første dag. Jeg klarer ikke å stå i butikken og bake samtidig.'},
+   {key:1,t:'Hvordan er privatøkonomien din? Eier du bolig?',r:'Samboeren min og jeg eier huset sammen. Det er det jeg er mest redd for å miste hvis dette går galt.',m:'urolig'},
+   {t:'Hva venter du av overskudd de første årene?',r:'Lite de to første årene, tror jeg. Men jeg må ta ut en vanlig lønn for å klare meg.'},
+   {t:'Hvor mye egne penger kan du skyte inn?',r:'Jeg har spart 150 000 kroner.'},
+   {fun:1,t:'Hva slags brød skal du bake?',r:'Surdeig på gammelt korn! Spelt, emmer og svedjerug. Du må komme innom og smake.'}],
+  keyG:'Du spurte om det som avgjør valget av selskapsform: lån, ansatte eller bolig.',keyB:'Du spurte ikke om lån, ansatte eller bolig før du ga råd om selskapsform.',
+  rec:{prompt:'Selma ser spent på deg. Hva anbefaler du?',o:['Jeg anbefaler aksjeselskap.','Jeg anbefaler enkeltpersonforetak.','Dette kan jeg ikke gi råd om. Du bør snakke med en advokat.'],ok:0,
+   res:[{adj:{kvalitet:10,tillit:4},adjNoKey:{kvalitet:4,tillit:4},line:'Det gir mening. Da går jeg for AS.',m:'glad',why:'Rådet følger av det du fant ut. '},
+    {adj:{kvalitet:-8},line:'Ok. Da hefter jeg vel for alt selv, da? Det må jeg tenke på.',m:'urolig',why:'Med lån på 600 000 kroner, fem års leiekontrakt og ansatte er personlig ansvar en stor risiko for Selma. ',mb:'Rådet til Selma tok ikke hensyn til risikoen hun tar.'},
+    {adj:{kvalitet:-4,tillit:-8},line:'Å. Jeg trodde det var sånt dere kunne hjelpe med.',m:'urolig',why:'Valg av selskapsform er vanlig rådgivning for en regnskapsfører. Å sende kunden videre uten grunn svekker tilliten. ',mb:'Du ga ikke Selma noe råd.'}],
+   noKey:'Rådet er forsvarlig, men du spurte ikke om det som avgjør saken: lån, leiekontrakt, ansatte og bolig. ',
+   tail:'I et AS hefter eieren som hovedregel bare for innskutt kapital, og minstekravet til aksjekapital er 30 000 kroner. I et enkeltpersonforetak hefter hun personlig for all gjeld. Som ansatt i eget AS får hun også samme rettigheter som andre arbeidstakere. Et godt råd nevner også ulempene: AS har flere formelle krav, og banken kan kreve personlig kausjon for lånet, slik at ansvarsbegrensningen ikke gjelder fullt ut. Rådet bør gis skriftlig.',
+   mg:'Du ga Selma et konkret råd som passer risikoen hun tar.'},
+  follow:{ask:'En ting til. Kan dere ikke bare ta alt papirarbeidet fra i dag? Jeg har en bunke kvitteringer i veska.',
+   o:['Klart, gi meg bunken, så starter vi i dag.','Gjerne. Først må jeg kontrollere legitimasjonen din, og vi må ha en skriftlig oppdragsavtale.'],ok:1,yes:'Ryddig. Jeg har passet med meg.',no:'Så enkelt! Her er de.',
+   title:'Oppstart av kundeforholdet',lu:LU.grfs,skill:'dok',
+   why:'Regnskapsførere er rapporteringspliktige etter hvitvaskingsloven og skal gjennomføre kundetiltak før kundeforholdet etableres. Regnskapsførerloven krever skriftlig oppdragsavtale. Avtalen beskytter også deg, fordi den viser hva du har påtatt deg og hva kunden selv har ansvar for.',
+   mg:'Du krevde legitimasjon og oppdragsavtale før du tok imot bilagene til Selma.',mb:'Du tok imot bilagene til Selma uten kundekontroll og oppdragsavtale.'}},
+
+ {who:'ingrid',name:'Ingrid Holm',short:'Ingrid',title:'Ingrid Holm: likviditet i vekst',label:'Likviditet i vekst',lu:LU.analyse,
+  brief:'Klokka ni kommer Ingrid Holm. Hun driver nettbutikken Holm Garn AS. Salget vokser, men hun sier at kontoen er tom. Hun venter på møterommet.',
+  jonas:'Kunder som vokser fort, går oftere tomme for penger enn kunder som står stille. Se på balansen, ikke bare på resultatet.',
+  open:'Hei! Jeg skjønner ingenting. Salget har økt med 60 prosent, og regnskapet viser overskudd. Likevel er kassekreditten brukt opp. Hvor er pengene mine?',
+  first:{o:['Du bruker for mye. Du må kutte kostnader.','Overskudd og penger på konto er ikke det samme. Kan jeg stille noen spørsmål om hvor pengene er bundet?','Du trenger et større lån. Jeg kan hjelpe deg med søknaden.'],ok:1,
+   yes:'Ja, spør. Jeg vil gjerne forstå det.',no:'Hm. Hvordan vet du det? Du har ikke sett på tallene ennå.',
+   good:'Du skilte mellom resultat og likviditet, og du kartla før du konkluderte.',bad:'Du konkluderte før du visste hvor pengene var bundet. Et selskap kan gå med overskudd og likevel mangle penger.',
+   mg:'Du stilte spørsmål før du svarte Ingrid.',mb:'Du svarte Ingrid før du visste hvor pengene var bundet.'},
+  qs:[{key:1,t:'Hvor stort er varelageret, og hvordan har det utviklet seg?',r:'Jeg har garn for 1,1 millioner kroner på lager. For ett år siden var det 500 000. Jeg kjøper store partier fordi jeg får rabatt.'},
+   {key:1,t:'Hvem selger du på kreditt til, og hvor raskt betaler de?',r:'Garnbutikker og strikkekafeer får 45 dagers kreditt. De skylder meg 320 000 kroner, og en del av det er forfalt. Jeg har aldri sendt en purring.',m:'urolig'},
+   {key:1,t:'Når betaler du leverandørene dine?',r:'Samme dag som fakturaen kommer. Jeg liker ikke å skylde penger. De gir meg egentlig 30 dager.'},
+   {t:'Har du satt av penger til merverdiavgiften?',r:'Nei. Den tar jeg av det som står på konto når den forfaller. Neste termin blir vel rundt 90 000 kroner.',m:'urolig'},
+   {t:'Hvor mye tar du ut av selskapet selv?',r:'Vanlig lønn, 40 000 kroner i måneden. Ikke noe utbytte.'},
+   {fun:1,t:'Hva strikker du selv for tiden?',r:'En islender i ubleket ull til faren min! Den blir ferdig til jul hvis jeg sover litt mindre.'}],
+  keyG:'Du spurte om det som binder penger: varelager, kundefordringer eller betaling til leverandører.',keyB:'Du spurte ikke om varelager, kundefordringer eller betaling til leverandører før du ga råd.',
+  rec:{prompt:'Ingrid ser på deg. Hva anbefaler du?',o:['Vi setter opp et likviditetsbudsjett og frigjør penger i driften først: mindre innkjøp, purring på kundene og betaling til leverandørene ved forfall.','Søk banken om høyere kassekreditt nå, så kan du fortsette som før.','Stopp veksten. Kutt markedsføringen til kontoen er i pluss.'],ok:0,
+   res:[{adj:{kvalitet:10,tillit:4},adjNoKey:{kvalitet:4,tillit:4},line:'Det gir mening. Da begynner jeg med purringene i dag.',m:'glad',why:'Rådet følger av det du fant ut. '},
+    {adj:{kvalitet:-8,tillit:2},line:'Ok. Da låner jeg mer. Jeg håper banken sier ja.',m:'urolig',why:'Mer kreditt dekker hullet en stund, men årsaken er den samme, og banken vil uansett be om et likviditetsbudsjett. ',mb:'Du foreslo mer lån til Ingrid uten å gjøre noe med årsaken til pengemangelen.'},
+    {adj:{kvalitet:-6,tillit:-6},line:'Å. Jeg trodde vekst var bra.',m:'urolig',why:'Salget er lønnsomt. Problemet er at veksten binder penger i lager og kundefordringer, og det kan løses uten å stoppe salget. ',mb:'Du ba Ingrid stoppe veksten uten å vise hvordan hun kan frigjøre penger i driften.'}],
+   noKey:'Rådet er forsvarlig, men du spurte ikke om det som avgjør saken: hvor mye som er bundet i lager og kundefordringer, og når leverandørene blir betalt. ',
+   tail:'Holm Garn har 600 000 kroner mer bundet i varelager enn for ett år siden, 320 000 kroner utestående hos kunder, og selskapet betaler leverandørene før forfall. Det forklarer hvorfor overskuddet ikke står på konto. Et likviditetsbudsjett viser inn- og utbetalinger måned for måned, også merverdiavgiften, og viser når kontoen går tom. Tiltakene er lavere lager, fast purrerutine og å bruke kredittiden hos leverandørene. Trengs det likevel mer kreditt, er budsjettet det banken vil se.',
+   mg:'Du ga Ingrid et konkret råd som løser årsaken til pengemangelen.'},
+  follow:{ask:'En ting til. Mva-meldingen har frist om to uker, og jeg har ikke pengene. Kan vi ikke bare vente med å sende den til jeg har fått inn noe fra kundene?',
+   o:['Ja, vi venter med meldingen til du har penger.','Nei. Meldingen sender vi i tide. Kan du ikke betale ved forfall, hjelper jeg deg å søke Skatteetaten om betalingsavtale.'],ok:1,yes:'Ok. Det visste jeg ikke at gikk an.',no:'Takk! Da har jeg én ting mindre å tenke på.',
+   title:'Mva-meldingen og betalingsproblemet',lu:LU.offentlig,skill:'press',
+   why:'Plikten til å levere mva-meldingen i tide gjelder selv om selskapet ikke kan betale. For sen levering kan gi tvangsmulkt (skatteforvaltningsloven § 14-1), og det løper renter på avgiften uansett. Levering og betaling er to ulike plikter. Den som ikke kan betale ved forfall, kan søke Skatteetaten om betalingsavtale. En regnskapsfører som holder tilbake en melding for å skjule et betalingsproblem, bryter god regnskapsføringsskikk.',
+   mg:'Du sa nei til å holde tilbake mva-meldingen og viste til betalingsavtale.',mb:'Du gikk med på å vente med mva-meldingen fordi Ingrid manglet penger.'}},
+
+ {who:'arvid',name:'Arvid Nes',short:'Arvid',title:'Arvid Nes: første ansatt',label:'Første ansatt',lu:LU.offentlig,
+  brief:'Klokka ni kommer Arvid Nes fra Nes Rør AS. Han har drevet alene i seks år og vil nå ta inn en rørlegger til. Han venter på møterommet.',
+  jonas:'Første ansatt er et stort steg for en kunde. Mange plikter slår inn samtidig, og de fleste kjenner bare til lønna.',
+  open:'Hei! Jeg har mer arbeid enn jeg rekker, så jeg vil ha med meg Kim. Kameraten min sier at Kim bare kan sende meg faktura fra sitt eget firma. Da slipper jeg arbeidsgiveravgift og alt papirarbeidet. Det er vel greit?',
+  first:{o:['Ja, det er det enkleste for dere begge.','Det kommer an på hvordan Kim skal arbeide. Kan jeg stille noen spørsmål først?','Nei, det er aldri lov å ta inn folk på faktura.'],ok:1,
+   yes:'Ja, bare spør.',no:'Er du sikker? Du har ikke spurt hvordan Kim skal jobbe ennå.',
+   good:'Om Kim er arbeidstaker eller selvstendig, avgjøres av hvordan arbeidet faktisk skjer. Du kartla før du konkluderte.',bad:'Du konkluderte før du visste hvordan Kim skal arbeide. Det er de faktiske forholdene som avgjør, ikke hva partene kaller avtalen.',
+   mg:'Du stilte spørsmål før du svarte Arvid.',mb:'Du svarte Arvid før du visste hvordan Kim skal arbeide.'},
+  qs:[{key:1,t:'Hvem bestemmer hva Kim skal gjøre, og når?',r:'Det gjør jeg. Han blir med meg på jobbene mine og gjør det jeg setter ham til.'},
+   {key:1,t:'Hvem holder bil, verktøy og materialer?',r:'Jeg. Han kjører firmabilen og bruker verktøyet mitt.'},
+   {key:1,t:'Skal Kim ha andre oppdragsgivere enn deg?',r:'Nei. Han skal jobbe fullt for meg, og jeg håper han blir i mange år.'},
+   {key:1,t:'Hvem har ansvaret hvis noe blir gjort feil hos en kunde?',r:'Det er jeg som har ansvaret overfor kunden. Det er mitt navn som står på bilen.'},
+   {t:'Hva har du tenkt å betale ham?',r:'Rundt 550 000 kroner i året. Det er det han har der han er nå.'},
+   {fun:1,t:'Hvordan kjenner du Kim?',r:'Han var lærling hos meg for åtte år siden! Den beste jeg har hatt. Han lodder penere enn meg, men det sier jeg ikke til ham.'}],
+  keyG:'Du spurte om det som avgjør om Kim er arbeidstaker: hvem som leder arbeidet, hvem som holder utstyret, hvem som har ansvaret, eller om han har andre oppdragsgivere.',keyB:'Du spurte ikke om hvem som leder arbeidet, hvem som holder utstyret, eller om Kim har andre oppdragsgivere.',
+  rec:{prompt:'Arvid venter på svar. Hva anbefaler du?',o:['Kim må ansettes. Jeg hjelper deg med arbeidsavtale, registrering som arbeidsgiver og lønnskjøring.','La Kim opprette enkeltpersonforetak og sende faktura, slik kameraten din foreslår.','Dette er arbeidsrett. Det må du spørre en advokat om.'],ok:0,
+   res:[{adj:{kvalitet:10,tillit:4},adjNoKey:{kvalitet:4,tillit:4},line:'Greit. Da gjør vi det ordentlig. Bare du holder styr på papirene.',m:'glad',why:'Rådet følger av det du fant ut. '},
+    {adj:{kvalitet:-10,integritet:-6,tillit:3},line:'Flott. Da ber jeg Kim ordne seg et firma.',m:'glad',why:'Kim skal arbeide under Arvids ledelse, med Arvids bil og verktøy, og bare for Arvid. Da er han arbeidstaker, uansett hva avtalen kalles. ',mb:'Du rådet Arvid til å ta inn Kim på faktura, selv om Kim i realiteten blir arbeidstaker.'},
+    {adj:{kvalitet:-4,tillit:-8},line:'Jaha. Jeg trodde dere kunne sånt.',m:'urolig',why:'Å hjelpe en kunde med å bli arbeidsgiver er vanlig arbeid for en regnskapsfører. Å sende kunden videre uten grunn svekker tilliten. ',mb:'Du ga ikke Arvid noe råd.'}],
+   noKey:'Rådet er riktig, men du spurte ikke om det som avgjør saken: hvem som leder arbeidet, hvem som holder utstyret, og om Kim har andre oppdragsgivere. ',
+   tail:'Om en person er arbeidstaker eller selvstendig, avgjøres etter en samlet vurdering av de faktiske forholdene. Blir Kim regnet som arbeidstaker i ettertid, kan Nes Rør få krav om arbeidsgiveravgift, ansvar for skattetrekk som ikke er foretatt, og feriepenger. Som arbeidsgiver må Arvid gi Kim skriftlig arbeidsavtale, melde arbeidsforholdet i a-meldingen, trekke skatt og sette trekket på egen skattetrekkskonto, betale arbeidsgiveravgift, tegne yrkesskadeforsikring og opprette tjenestepensjon. Et godt råd viser også hva en ansatt koster i tillegg til lønna.',
+   mg:'Du ga Arvid et konkret råd som stemmer med hvordan Kim faktisk skal arbeide.'},
+  follow:{ask:'En ting til. De pengene jeg trekker i skatt for Kim, står jo på en konto hos meg. Kan jeg bruke dem hvis det kniper en måned, bare jeg betaler tilbake før forfall?',
+   o:['Ja, så lenge beløpet er på plass når det skal betales.','Nei. Skattetrekket tilhører ikke selskapet. Det skal stå urørt på skattetrekkskontoen til det betales til staten.'],ok:1,yes:'Greit. Da lar jeg den kontoen være i fred.',no:'Fint! Det er godt å ha noe å gå på.',
+   title:'Bruk av skattetrekksmidler',lu:LU.rutiner,skill:'press',
+   why:'Forskuddstrekket tilhører skattekreditorene fra det øyeblikket lønna utbetales. Arbeidsgiveren skal sette det på en egen skattetrekkskonto senest første virkedag etter lønnsutbetalingen, eller stille bankgaranti (skattebetalingsloven § 5-12). Å bruke pengene til drift er straffbart, også når de blir betalt tilbake. Trenger Arvid en buffer, er kassekreditt eller garanti lovlige løsninger.',
+   mg:'Du sa nei til at Arvid kan låne av skattetrekket.',mb:'Du sa at Arvid kan bruke skattetrekket til drift.'}}
+];
+
+/* ----- bank 2: bilag ----- */
+async function runBooks(C){const from=LOG.length,N=C.bilag.length;
+  for(let n=0;n<N;n++){const B=C.bilag[n],ttl='Bilag '+(n+1)+' av '+N;
+    const i=await panelChoice(C.client+' · '+ttl,'<div class="paper">'+B.paper+'</div>'+(B.note?'<div class="note">'+esc(B.note)+'</div>':''),B.q,B.o);tick(25);
+    if(B.special){await B.special(i,B,ttl);continue;}
+    const good=i===B.ok,mid=!good&&!!B.mid&&B.mid.includes(i),v=good?'good':mid?'mid':'bad';
+    adj({kvalitet:good?8:mid?-2:-8});
+    (B.marks||[]).forEach(m=>mark(m[0],m[3]?m[3](i):good,m[1],m[2]));
+    logItem({title:ttl+': '+B.name,choice:B.o[i],v,why:B.why,lu:B.lu});
+    $('bfb').innerHTML='<div class="fb '+v+'"><div class="v">'+(good?'Riktig behandlet':mid?'Delvis riktig':'Ikke riktig')+'</div><p>'+esc(B.why)+'</p></div><div class="row"><button class="btn" id="bnext" type="button">'+(n<N-1?'Neste bilag':'Ferdig med bilagene')+'</button></div>';
+    await clicked('#bnext');}
+  hidePanel();await feedback('Tilbakemelding: bilagene fra '+C.client,from);}
+async function tvSpecial(i,B,ttl){let v,choice=B.o[i],reason='';
+  mark('fakta',i===1,'Du ringte Tor før du bokførte TV-fakturaen.','Du bokførte TV-fakturaen uten å spørre Tor først.');
+  if(i===1){hidePanel();
+    await say('tor','TV-en? Den står hjemme i stua. Men jeg ser jo på byggeprogrammer, he he. Bare før den på firmaet.');
+    const t=['Greit, jeg fører den som kontorutstyr.','Jeg fører den som kontorutstyr, men uten fradrag for mva.','Det er en privat kostnad. Selskapet får ikke fradrag, og du må betale den tilbake eller ta den som lønn eller utbytte.'];
+    const c=await choose('du','Hva svarer du Tor?',t);closeDialog();choice='Ringte Tor. '+t[c];reason=await askReason(2,'Begrunn behandlingen av TV-fakturaen',t[c]);F.tv=c;
+    if(c===2){adj({integritet:10,kvalitet:8,tillit:-3});v='good';await say('tor','Hmf. Greit. Jeg overfører pengene i kveld.');}
+    else if(c===0){adj({integritet:-15,kvalitet:-8,tillit:3});v='bad';await say('tor','Sånn skal det være!');}
+    else{adj({integritet:-5,kvalitet:-5});v='bad';await say('tor','Jaja, bedre enn ingenting.');}
+    closeDialog();}
+  else if(i===0){F.tv=0;adj({integritet:-15,kvalitet:-8,tillit:3});v='bad';}
+  else{F.tv=3;adj({kvalitet:2,tillit:-5});v='mid';}
+  mark('press',F.tv===2||F.tv===3,'Du førte ikke TV-en som kontorutstyr, selv om Tor ba om det.','Du førte TV-en som kontorutstyr fordi Tor ba om det.');
+  mark('alt',i===1&&F.tv===2,'Du forklarte Tor hvordan TV-kjøpet kan gjøres opp: tilbakebetaling, lønn eller utbytte.','Du forklarte ikke Tor hvordan TV-kjøpet kan gjøres opp på lovlig vis.');
+  const why=(v==='good'?'Du avklarte fakta før du bokførte, og du forklarte konsekvensen for kunden. ':v==='mid'?'Konklusjonen er trolig riktig, men du bokførte uten å avklare fakta med kunden. Leveringsadressen er et varsel, ikke et bevis. ':'En TV i eierens stue er en privat kostnad. Å føre den som kontorutstyr gir uriktig regnskap og uriktig skatte- og mva-grunnlag. Det gjelder også om du dropper mva-fradraget. ')+
+    'Private kostnader gir verken skattefradrag eller mva-fradrag for selskapet. Når selskapet har betalt, må beløpet føres som en fordring på Tor som han gjør opp, eller behandles som lønn eller utbytte. En fordring som blir stående, kan bli regnet som lån til aksjonær, som skattlegges som utbytte (skatteloven § 10-11).';
+  logItem({title:ttl+': TV levert privat',choice,reason,v,why,lu:LU.lojal});}
+const BOOKS=[
+ {client:'Bråten Bygg AS',title:'Bilag fra Bråten Bygg AS',
+  brief:'Etterpå ligger det bilag fra Bråten Bygg AS på pulten din. Tor Bråten er en av de største kundene våre, så vær nøye.',
+  jonas:'Bråten-bilagene, ja. Tor er grei, men han tøyer strikken. Spør heller én gang for mye.',
+  bilag:[
+   {name:'restaurantkvittering',paper:'<div class="hd">BRYGGA MAT &amp; VIN</div><div class="sm">Org.nr. 987 654 321 MVA · 14.11.</div><div class="ln"><span>Mat, 4 kuverter</span><span>3 400,00</span></div><div class="ln"><span>Vin</span><span>1 400,00</span></div><div class="ln tot"><span>Sum inkl. mva</span><span>4 800,00</span></div><div class="sm">Betalt med firmakort ****4471</div>',note:'',
+    q:'Kortkvittering fra restaurant. Det følger ingen forklaring med.',
+    o:['Bokfør som representasjon med fradrag for inngående mva.','Bokfør som møtekostnad uten å spørre.','Be Tor opplyse formålet og hvem som deltok før du bokfører.','Avvis bilaget og la være å bokføre det.'],ok:2,
+    why:'Dokumentasjon av bevertning skal vise formålet og hvem som deltok (bokføringsforskriften § 5-10). Uten det kan du ikke vurdere om kostnaden er fradragsberettiget. Det er uansett ikke fradrag for inngående mva på servering og representasjon (merverdiavgiftsloven § 8-3). Kostnaden er betalt av selskapet og skal bokføres, så å avvise bilaget løser ingenting.',
+    lu:LU.trans,marks:[['dok','Du ba om formål og deltakere for restaurantkvitteringen.','Du ba ikke om formål og deltakere for restaurantkvitteringen.']]},
+   {name:'kappsag',paper:'<div class="hd">VERKTØYHUSET AS</div><div class="sm">Faktura 20417 · Org.nr. 912 345 678 MVA</div><div class="sm">Kunde: Bråten Bygg AS</div><div class="ln"><span>Kapp- og gjærsag</span><span>6 250,00</span></div><div class="ln"><span>Mva 25 %</span><span>1 562,50</span></div><div class="ln tot"><span>Å betale</span><span>7 812,50</span></div>',note:'',
+    q:'Faktura for en kappsag til verkstedet. Fakturaen har alle opplysninger.',
+    o:['Aktiver saga som driftsmiddel og avskriv den.','Kostnadsfør direkte med fradrag for inngående mva.','Kostnadsfør direkte uten fradrag for mva.'],ok:1,
+    why:'Saga er til bruk i den avgiftspliktige virksomheten, og fakturaen oppfyller kravene til salgsdokument. Da er det fradrag for inngående mva. Kostprisen er under grensen på 30 000 kroner for betydelige driftsmidler (skatteloven § 14-40), så den kostnadsføres direkte, for eksempel på konto 6500 Motordrevet verktøy.',
+    lu:LU.mva,marks:[['dok','Du behandlet kappsaga riktig.','Du behandlet kappsaga feil. Den skulle kostnadsføres direkte med fradrag for mva.']]},
+   {paper:'<div class="hd">ELEKTROLAGERET</div><div class="sm">Faktura 88102 · Org.nr. 923 456 789 MVA</div><div class="sm">Kunde: Bråten Bygg AS<br>Levert til: Tor Bråten, Granlia 12</div><div class="ln"><span>TV 65 tommer</span><span>11 992,00</span></div><div class="ln"><span>Mva 25 %</span><span>2 998,00</span></div><div class="ln tot"><span>Å betale</span><span>14 990,00</span></div>',note:'Kontorutstyr. Før det på kontoret. – Tor',
+    q:'Faktura for en TV. Den er levert til Tors privatadresse.',
+    o:['Bokfør som kontorutstyr med fradrag for mva, slik Tor ber om.','Ring Tor og spør hvor TV-en står og hva den brukes til.','Bokfør som privat uttak uten å spørre.'],special:tvSpecial}]},
+
+ {client:'Kafé Kvern AS',title:'Bilag fra Kafé Kvern AS',
+  brief:'Etterpå ligger det bilag fra Kafé Kvern AS på pulten din. Det er en kafé med mye kontantsalg, så se nøye på kassa.',
+  jonas:'Kafé Kvern, ja. Eieren heter Mona. Hun er ryddig, men hun vil gjerne at tallene skal gå opp uten spørsmål.',
+  bilag:[
+   {name:'dagsoppgjør med kassedifferanse',paper:'<div class="hd">KAFÉ KVERN AS</div><div class="sm">Dagsoppgjør · Z-rapport nr. 311 · 14.11.</div><div class="ln"><span>Kontantsalg ifølge kassa</span><span>18 450,00</span></div><div class="ln"><span>Opptalt kontantbeholdning</span><span>17 950,00</span></div><div class="ln tot"><span>Differanse</span><span>−500,00</span></div><div class="sm">Talt opp av: Mona K.</div>',note:'Før 17 950 som salg, så går det opp. – Mona',
+    q:'Dagsoppgjør fra kassa. Det mangler 500 kroner i forhold til Z-rapporten.',
+    o:['Bokfør 17 950 kroner som kontantsalg, slik Mona ber om.','Bokfør salget etter Z-rapporten, 18 450 kroner. Før differansen på egen konto, og be Mona forklare den.','Bokfør salget etter Z-rapporten, og før de 500 kronene som privatuttak for Mona.'],ok:1,mid:[2],
+    why:'Kontantsalget skal bokføres etter Z-rapporten fra kassasystemet. Differansen mellom opptalt beholdning og salget ifølge kassa skal gå fram av dagsoppgjøret, og den skal forklares når den ikke er ubetydelig (bokføringsforskriften delkapittel 5-3). Å føre et lavere salg gir for lav omsetning og for lav utgående mva. Å føre differansen som privatuttak uten å spørre er en gjetning. Gjentatte differanser er et varsel om svakheter i kasserutinen.',
+    lu:LU.trans,marks:[['press','Du førte kontantsalget etter Z-rapporten, ikke etter lappen fra Mona.','Du førte et lavere kontantsalg enn kassa viser, fordi Mona ba om det.',i=>i!==0],['fakta','Du ba Mona forklare kassedifferansen.','Du ba ikke Mona forklare kassedifferansen.']]},
+   {name:'tips utbetalt fra kassa',paper:'<div class="hd">KAFÉ KVERN AS</div><div class="sm">Uttak fra kasse · oktober</div><div class="ln"><span>Tips betalt med kort</span><span>6 200,00</span></div><div class="ln"><span>Utbetalt kontant til 4 ansatte</span><span>6 200,00</span></div><div class="sm">Kvittert: Mona K.</div>',note:'Tipsen er de ansattes egne penger. Den skal ikke i regnskapet. – Mona',
+    q:'Kundene har gitt 6 200 kroner i tips på kortterminalen. Mona har betalt beløpet ut kontant til de ansatte.',
+    o:['Hold tipsen utenfor regnskapet, slik Mona skriver.','Før utbetalingen som annen driftskostnad.','Behandle tipsen som lønn: den skal med i a-meldingen, med skattetrekk og arbeidsgiveravgift. Forklar Mona hvorfor.'],ok:2,
+    why:'Tips som kundene betaler gjennom arbeidsgiverens betalingsløsning, er lønn for de ansatte. Arbeidsgiveren skal rapportere beløpet i a-meldingen, trekke skatt og beregne arbeidsgiveravgift. Pengene har gått inn på kafeens konto, og de må derfor også gå fram av regnskapet.',
+    lu:LU.trans,marks:[['dok','Du behandlet tipsen som lønn, med rapportering og skattetrekk.','Du behandlet ikke tipsen som lønn. Den skal rapporteres i a-meldingen.'],['alt','Du forklarte Mona hvordan tipsen må behandles.','Du forklarte ikke Mona hvordan tipsen må behandles.']]},
+   {name:'faktura fra selger uten mva-registrering',paper:'<div class="hd">SOLBAKKEN GÅRD</div><div class="sm">Faktura 17 · Org.nr. 934 567 890</div><div class="sm">Kunde: Kafé Kvern AS</div><div class="ln"><span>Egg, 60 brett</span><span>3 000,00</span></div><div class="ln"><span>Mva 15 %</span><span>450,00</span></div><div class="ln tot"><span>Å betale</span><span>3 450,00</span></div>',note:'',
+    q:'Faktura for egg fra en lokal gård. Fakturaen er betalt.',
+    o:['Bokfør med fradrag for inngående mva på 450 kroner.','Bokfør hele beløpet som kostnad uten fradrag for mva, og be gården om en faktura med «MVA» etter organisasjonsnummeret.','Avvis bilaget og la være å bokføre det.'],ok:1,
+    why:'Fradrag for inngående mva krever et salgsdokument der selgerens organisasjonsnummer er etterfulgt av bokstavene MVA (merverdiavgiftsloven § 15-10 og bokføringsforskriften § 5-1-1). Det mangler her. Enten er ikke gården registrert i Merverdiavgiftsregisteret, og da har den krevd mva uten rett, eller så er fakturaen mangelfull. Registreringen kan kontrolleres i Enhetsregisteret. Kostnaden er betalt og skal bokføres, men fradraget må vente til dokumentasjonen er i orden.',
+    lu:LU.mva,marks:[['dok','Du krevde riktig salgsdokument før du tok fradrag for mva på eggene.','Du kontrollerte ikke om selgeren av eggene var mva-registrert.']]}]},
+
+ {client:'Dahl Analyse AS',title:'Bilag fra Dahl Analyse AS',
+  brief:'Etterpå ligger det bilag fra Dahl Analyse AS på pulten din. Line Dahl er eneste ansatte og arbeider hjemmefra, så se nøye på grensen mot det private.',
+  jonas:'Selskaper med én ansatt er vanskeligere enn de ser ut. Eieren og selskapet har samme lommebok i hodet, men ikke i regnskapet.',
+  bilag:[
+   {name:'kjøregodtgjørelse uten spesifikasjon',paper:'<div class="hd">REISEREGNING</div><div class="sm">Dahl Analyse AS · Line Dahl · oktober</div><div class="ln"><span>Kjøring med egen bil</span><span>620 km</span></div><div class="ln"><span>Sats per km</span><span>3,50</span></div><div class="ln tot"><span>Til utbetaling</span><span>2 170,00</span></div><div class="sm">Formål: kundemøter</div>',note:'Utbetal skattefritt sammen med lønna. – Line',
+    q:'Krav om kjøregodtgjørelse for oktober. Det er oppgitt samlet antall kilometer og «kundemøter».',
+    o:['Utbetal 2 170 kroner skattefritt, slik Line ber om.','Be Line spesifisere hver reise med dato, formål, strekning og antall kilometer før beløpet utbetales skattefritt.','Avslå kravet. Kjøring med egen bil er en privat kostnad.'],ok:1,
+    why:'Bilgodtgjørelse kan utbetales uten skattetrekk bare når reiseregningen viser dato, formål, start- og sluttpunkt og kjørelengde for hver reise, og satsen ikke er høyere enn den skattefrie satsen (skattebetalingsforskriften § 5-6-12). Uten slik dokumentasjon er hele beløpet lønn, med skattetrekk og arbeidsgiveravgift. Yrkeskjøring er en kostnad for selskapet, så det er heller ikke riktig å avslå kravet.',
+    lu:LU.trans,marks:[['dok','Du krevde spesifisert reiseregning før kjøregodtgjørelsen ble utbetalt skattefritt.','Du krevde ikke spesifisert reiseregning for kjøregodtgjørelsen.'],['press','Du utbetalte ikke kjøregodtgjørelsen skattefritt bare fordi Line ba om det.','Du utbetalte kjøregodtgjørelsen skattefritt fordi Line ba om det.',i=>i!==0]]},
+   {name:'møbler til hjemmekontor',paper:'<div class="hd">KONTORMILJØ AS</div><div class="sm">Faktura 5531 · Org.nr. 945 678 901 MVA</div><div class="sm">Kunde: Dahl Analyse AS<br>Levert til: Line Dahl, Bjørkeveien 8</div><div class="ln"><span>Hev- og senkbord, kontorstol</span><span>9 600,00</span></div><div class="ln"><span>Mva 25 %</span><span>2 400,00</span></div><div class="ln tot"><span>Å betale</span><span>12 000,00</span></div>',note:'Hjemmekontoret er selskapets eneste kontor. – Line',
+    q:'Faktura for kontormøbler. De er levert til Lines privatadresse.',
+    o:['Privat kostnad. Før beløpet som en fordring på Line.','Kostnadsfør som inventar med fradrag for inngående mva.','Aktiver møblene som driftsmiddel og avskriv dem.'],ok:1,
+    why:'Leveringsadressen avgjør ikke saken. Selskapet har ikke andre lokaler, møblene er vanlig kontorinventar, og de brukes i den avgiftspliktige virksomheten. Da er kostnaden selskapets, med fradrag for inngående mva. Kostprisen er under grensen på 30 000 kroner for betydelige driftsmidler (skatteloven § 14-40) og kostnadsføres direkte. Selskapet eier møblene. Hadde det vært en sofa eller en TV, ville svaret vært et annet.',
+    lu:LU.mva,marks:[['fakta','Du så at kontormøblene brukes i virksomheten, selv om de er levert hjem til Line.','Du behandlet kontormøblene feil. De brukes i virksomheten og skulle kostnadsføres med fradrag for mva.']]},
+   {name:'bredbånd fakturert privat',paper:'<div class="hd">NORDNETT</div><div class="sm">Faktura 77120 · Org.nr. 956 789 012 MVA</div><div class="sm">Kunde: Line Dahl, Bjørkeveien 8</div><div class="ln"><span>Bredbånd, oktober</span><span>719,20</span></div><div class="ln"><span>Mva 25 %</span><span>179,80</span></div><div class="ln tot"><span>Å betale</span><span>899,00</span></div>',note:'Jeg bruker nettet i jobben. Selskapet dekker det. – Line',
+    q:'Faktura for bredbånd hjemme hos Line. Fakturaen er stilet til henne privat.',
+    o:['Bokfør som kostnad med fradrag for inngående mva.','Selskapet kan dekke kostnaden, men uten fradrag for mva, fordi fakturaen ikke er stilet til selskapet. Fordelen rapporteres som lønn etter reglene for elektronisk kommunikasjon.','Avslå. Bredbånd hjemme er en privat kostnad som selskapet ikke kan dekke.'],ok:1,
+    why:'En arbeidsgiver kan dekke bredbånd når den ansatte trenger det i arbeidet. Fordelen ved privat bruk skattlegges med et fast sjablongbeløp og skal rapporteres i a-meldingen. Fradrag for inngående mva krever et salgsdokument som er stilet til selskapet, og det mangler her. Et godt råd til Line er å be leverandøren fakturere selskapet.',
+    lu:LU.lojal,marks:[['dok','Du tok ikke fradrag for mva på en faktura som er stilet til Line privat.','Du tok ikke hensyn til at bredbåndsfakturaen er stilet til Line privat.']]}]}
+];
+
+/* ----- bank 3: etikk ----- */
+const ETHICS=[
+ {title:'Tor Bråten vil tilbakedatere en faktura',
+  jonas:'Tor står for en femdel av omsetningen vår. Randi liker ikke at vi krangler med ham. Det betyr ikke at han har rett.',
+  async run(){const from=LOG.length;
+    ringing=true;sfx.ring();const ringT=setInterval(()=>{if(ringing&&canMove())sfx.ring();},2600);setObj('Telefonen ringer. Ta den på pulten din','desk');
+    await waitFor('desk');ringing=false;clearInterval(ringT);
+    await say('tor','Hei, det er Tor. Jeg trenger en tjeneste. Banken vil se foreløpige tall for i fjor før de gir oss byggelånet. Svaret må inn på fredag.');
+    await say('tor','Vi fakturerte Solvik-prosjektet i januar, 480 000 kroner. Kan du ikke bare datere fakturaen til 31. desember? Jobben var jo nesten ferdig.');
+    const o=['Greit, jeg daterer den til 31. desember.','Nei. Det kan jeg ikke gjøre.','Jeg kan ikke endre datoen. Men hvor mye av arbeidet var faktisk utført før nyttår?','Jeg må snakke med Randi før jeg svarer.'];
+    const a=await choose('du','Hva svarer du?',o);F.tor=a;let firstReason='';
+    if(a===0){closeDialog();firstReason=await askReason(3,'Begrunn svaret til Tor',o[0]);adj({integritet:-30,kvalitet:-15,tillit:5});F.backdated=true;await say('tor','Topp! Jeg visste du var til å stole på.');}
+    else{
+      if(a===1){adj({integritet:10,tillit:-8});await say('tor','Seriøst? Det er jo bare en dato.');}
+      else if(a===2){adj({integritet:12,kvalitet:10,tillit:-2});await say('tor','Ærlig talt? Vi startet rett før jul. Det meste ble gjort i januar.');await say('du','Da er inntekten opptjent i år, og fakturaen skal vise når arbeidet faktisk ble levert. Jeg kan hjelpe deg med noe annet til banken: riktige tall, ordrereserven og et likviditetsbudsjett.');await say('tor','Banken vil ha et pent resultat, ikke et budsjett.');}
+      else{await say('tor','Gjør det. Men jeg ringer henne selv også.');}
+      closeDialog();if(a!==3)firstReason=await askReason(3,'Begrunn svaret til Tor',o[a]);
+      if(a!==3)await say('tor','Da ringer jeg Randi. Ha det.');
+    }
+    mark('fakta',a===2,'Du undersøkte hvor mye av Solvik-prosjektet som var utført før nyttår.','Du undersøkte ikke hvor mye av Solvik-prosjektet som var utført før nyttår.');
+    mark('press',a!==0,'Du sa ikke ja til å tilbakedatere fakturaen da Tor spurte.','Du sa ja til å tilbakedatere fakturaen da Tor spurte.');
+    logItem({title:'Tor vil tilbakedatere en faktura',choice:o[a],reason:firstReason,v:a===0?'bad':a===2?'good':'mid',
+      why:(a===0?'Du gikk med på å lage et regnskap som viser inntekt i feil år. ':a===1?'Du sa nei, og det er riktig. Du kunne i tillegg ha undersøkt fakta og vist Tor en lovlig vei til det han trenger. ':a===2?'Du sa nei til datoen, undersøkte hva som faktisk var utført og tilbød et lovlig alternativ. ':'Å spørre lederen er lov, men svaret på selve spørsmålet er klart, og ansvaret for oppdraget kan du ikke gi fra deg. ')+
+      'Inntekt skal resultatføres når den er opptjent (regnskapsloven § 4-1), og salgsdokumentet skal vise når leveringen skjedde (bokføringsforskriften § 5-1-1). En faktura med uriktig dato for å gi banken et bedre bilde er regnskapsmanipulasjon. En regnskapsfører som medvirker, bryter god regnskapsføringsskikk og risikerer både autorisasjonen og erstatningsansvar overfor banken.',
+      lu:LU.manip});
+    if(a!==0){closeDialog();setObj('Randi vil snakke med deg','randi');await waitFor('randi');tick(20);
+      await say('randi','Tor ringte. Han sier han bytter byrå hvis vi ikke hjelper ham med banken. Han står for en femdel av omsetningen vår.');
+      await say('randi','Kan vi ikke finne en pragmatisk løsning på den fakturaen?');
+      const ro=['Ok. Jeg daterer den om.','Nei. Det er regnskapsmanipulasjon, og det er vår autorisasjon som står på spill. Jeg foreslår at vi tilbyr Tor riktige tall med ordrereserve og likviditetsbudsjett, og at jeg dokumenterer saken.','Da får du gjøre det selv.'];
+      const rr=await choose('du','Hva svarer du Randi?',ro);closeDialog();F.randi=rr;const reason=await askReason(4,'Begrunn svaret til Randi',ro[rr]);
+      if(rr===0){F.backdated=true;adj({integritet:-25,kvalitet:-12});await say('randi','Fint. Da er den saken ute av verden.');}
+      else if(rr===1){adj({integritet:12,kvalitet:8,tillit:6});await say('randi','... Du har rett. Jeg skulle ikke ha spurt. Jeg ringer Tor selv og tilbyr ham pakken til banken.');}
+      else{adj({integritet:-8,kvalitet:-5});await say('randi','Greit. Jeg tar det herfra.');}
+      mark('press',rr===1,'Du sto fast da Randi la press på deg.',rr===0?'Du ga etter da Randi la press på deg.':'Du overlot avgjørelsen til Randi i stedet for å stoppe tilbakedateringen.');
+      logItem({title:'Press fra daglig leder',choice:ro[rr],reason,v:rr===1?'good':rr===0?'bad':'mid',
+        why:(rr===1?'Du sto fast, forklarte risikoen for byrået og kom med et alternativ som løser kundens egentlige behov. ':rr===0?'Du ga etter for press fra lederen. Ansvaret for det du fører, er fortsatt ditt. ':'Du unngikk å gjøre det selv, men du stoppet det ikke, og du vet ikke hva som blir gjort på et oppdrag du arbeider på. ')+
+        'Kravene til god regnskapsføringsskikk gjelder uansett hvor viktig kunden er for byrået. Når du sier nei, bør du samtidig vise hva du kan gjøre: banken trenger grunnlag for en kredittvurdering, og det kan dere levere med riktige tall. Skriv ned hva som ble spurt om, hva du svarte og hvorfor.',
+        lu:LU.etikk});
+    }
+    mark('alt',F.tor===2||F.randi===1,'Du foreslo riktige tall, ordrereserve og likviditetsbudsjett til banken.','Du foreslo ikke noe alternativ Tor kunne ta med til banken.');
+    closeDialog();await feedback('Tilbakemelding: telefonen fra Tor',from);},
+  finish(){if(F.backdated)adj({tillit:-30});else if(F.randi===1)adj({tillit:10});},
+  epi(){if(F.backdated)return 'Slik kunne det gått: Tre måneder senere oppdager banken at fakturadatoen ikke stemmer med timelistene. Lånet blir sagt opp, og Fjordvik Regnskap må forklare seg for Finanstilsynet.';
+    if(F.randi===1)return 'Slik kunne det gått: Tor fikk lånet på riktige tall, med ordrereserve og likviditetsbudsjett som vedlegg. Han er fortsatt kunde.';
+    return 'Slik kunne det gått: Randi ordnet saken med Tor på egen hånd. Du vet ikke hva som ble gjort, og du arbeider fortsatt på oppdraget.';},
+  trust(){if(F.backdated)return 'Kundetilliten steg da Tor fikk viljen sin, og falt da banken oppdaget feilen. Et ja gjør kunden fornøyd samme dag. Tilliten over tid følger av hvordan det går.';
+    if(F.randi===1)return 'Kundetilliten falt da du sa nei til Tor, og steg igjen da han fikk lånet på riktige tall. Et nei som kommer sammen med et lovlig alternativ, kan styrke kundeforholdet.';return '';}},
+
+ {title:'Kontantinnskudd uten dokumentasjon hos Vestby Bil AS',
+  jonas:'Vestby Bil har vært kunde her i tjue år, og Geir og Randi kjenner hverandre godt. Det gjør det ikke lettere å stille ham spørsmål.',
+  async run(){const from=LOG.length;
+    setObj('Gå til pulten din og avstem banken for Vestby Bil AS','desk');await waitFor('desk');
+    const o=['Bokfør innskuddene som salg av bruktbil, slik Geir skriver.','Ring Geir og be om kontrakter og navn på kjøperne.','La innskuddene stå uavstemt og gå videre til neste kunde.'];
+    const i=await panelChoice('Vestby Bil AS · Bankavstemming for oktober','<div class="paper"><div class="hd">KONTOUTSKRIFT</div><div class="sm">Vestby Bil AS · driftskonto · oktober</div><div class="ln"><span>03.10. Kontantinnskudd</span><span>95 000,00</span></div><div class="ln"><span>11.10. Kontantinnskudd</span><span>98 000,00</span></div><div class="ln"><span>19.10. Kontantinnskudd</span><span>90 000,00</span></div><div class="ln"><span>27.10. Kontantinnskudd</span><span>97 000,00</span></div><div class="ln tot"><span>Sum kontantinnskudd</span><span>380 000,00</span></div></div><div class="note">Kontantsalg. Før det som salg av bruktbil. – Geir</div>',
+      'Fire kontantinnskudd på til sammen 380 000 kroner. Det finnes ingen kontrakter eller salgsdokumenter som viser hvem som har betalt. Tidligere måneder har Vestby Bil nesten ikke hatt kontantsalg.',o);
+    tick(20);hidePanel();let c=-1,choice=o[i],v='bad',pre='';F.hv='uavklart';
+    if(i===0){adj({integritet:-15,kvalitet:-10,tillit:3});F.hv='bokfort';pre='Du bokførte 380 000 kroner som salg uten dokumentasjon og uten å undersøke. ';}
+    else if(i===2){adj({integritet:-5,kvalitet:-8});pre='Du bokførte ikke noe uriktig, men du undersøkte heller ikke. Plikten til å undersøke forsvinner ikke fordi posten blir liggende. ';v='mid';}
+    else{
+      await say('geir','Kontrakter? Det var noen karer som betalte kontant. Jeg skrev ikke opp navn. Bilene er solgt, og pengene står i banken. Hva er problemet?','sur');
+      const t=['Greit. Da fører jeg det som salg.','Jeg kan ikke bokføre salg uten dokumentasjon. Hvilke biler gjelder det, og hvem kjøpte dem?','Dette ser ut som hvitvasking. Jeg må melde deg til Økokrim.'];
+      c=await choose('du','Hva svarer du Geir?',t);choice='Ringte Geir. '+t[c];
+      if(c===0){adj({integritet:-12,kvalitet:-8,tillit:3});F.hv='bokfort';await say('geir','Sånn, ja. Enkelt og greit.','glad');pre='Du spurte, men du godtok et svar uten dokumentasjon. ';}
+      else if(c===1){adj({integritet:6,kvalitet:8,tillit:-3});v='good';await say('geir','Jeg har ikke tid til dette. Det var fire biler og fire kjøpere. Papirene ble visst aldri skrevet. Kan du ikke bare føre det?','sur');await say('geir','Jeg ringer Randi. Ha det.','sur');pre='Du ba om dokumentasjon og lot være å bokføre da den ikke kom. ';}
+      else{adj({integritet:-6,kvalitet:-6,tillit:-10});await say('geir','Hva sa du? Da får vi se hva Randi sier om det.','sur');pre='Du har plikt til å undersøke, men du skal ikke fortelle kunden at saken kan bli rapportert. Det bryter avsløringsforbudet (hvitvaskingsloven § 28). ';}
+      closeDialog();
+      mark('dok',c!==2,'Du røpet ikke for Geir at saken kan bli rapportert.','Du fortalte Geir at du ville melde ham til Økokrim. Det bryter avsløringsforbudet.');
+    }
+    const reason=await askReason(3,'Begrunn behandlingen av kontantinnskuddene',choice);
+    mark('fakta',c===1,'Du ba Geir om kontrakter og navn på kjøperne.','Du undersøkte ikke hvem som sto bak kontantinnskuddene hos Vestby Bil.');
+    mark('press',F.hv!=='bokfort','Du førte ikke innskuddene som salg da Geir ba om det.','Du førte kontantinnskuddene som salg fordi Geir ba om det.');
+    logItem({title:'Kontantinnskudd uten dokumentasjon',choice,reason,v,
+      why:pre+'Salg skal dokumenteres med salgsdokument som viser kjøper, vare og beløp (bokføringsforskriften § 5-1-1). Forhandlere av gjenstander kan heller ikke ta imot 40 000 kroner eller mer i kontanter for ett salg (hvitvaskingsloven § 5). Store kontantbeløp som avviker fra kundens vanlige mønster, og som kunden ikke vil dokumentere, er forhold regnskapsføreren har plikt til å undersøke nærmere (hvitvaskingsloven § 25).',
+      lu:LU.grfs});
+    if(c>0){setObj('Randi vil snakke med deg','randi');await waitFor('randi');tick(20);
+      await say('randi','Geir Vestby ringte, og han var sur. Jeg har kjent Geir i tjue år. Han er ingen forbryter.','urolig');
+      await say('randi','Kan du ikke bare føre innskuddene som salg, så er vi ferdige med det?','urolig');
+      const ro=['Ok. Jeg fører dem som salg.','Nei. Jeg har undersøkt, og mistanken står igjen. Jeg skriver ned det jeg har funnet, og byrået må sende melding til Økokrim. Geir skal ikke få vite om meldingen.','Da sier jeg opp kunden i dag og sletter det jeg har notert.'];
+      const rr=await choose('du','Hva svarer du Randi?',ro);closeDialog();const r2=await askReason(4,'Begrunn svaret til Randi',ro[rr]);
+      if(rr===0){F.hv='bokfort';adj({integritet:-25,kvalitet:-12});await say('randi','Fint. Da er den saken ute av verden.','n');}
+      else if(rr===1){F.hv='meldt';adj({integritet:12,kvalitet:8,tillit:2});await say('randi','... Du har rett. Det er jeg som er hvitvaskingsansvarlig her, og jeg skulle ikke ha spurt. Jeg sender meldingen i dag.','glad');}
+      else{adj({integritet:-8,kvalitet:-8});await say('randi','Vi kan vurdere kundeforholdet. Men notatene sletter vi ikke.','sur');}
+      mark('press',rr===1,'Du sto fast da Randi la press på deg.',rr===0?'Du ga etter da Randi la press på deg.':'Du ville si opp kunden i stedet for å følge saken opp.');
+      mark('dok',rr===1,'Du dokumenterte undersøkelsene og fulgte reglene for rapportering.','Du fulgte ikke reglene for dokumentasjon og rapportering etter hvitvaskingsloven.');
+      logItem({title:'Press fra daglig leder',choice:ro[rr],reason:r2,v:rr===1?'good':rr===0?'bad':'mid',
+        why:(rr===1?'Du sto fast og pekte på det loven krever. ':rr===0?'Du ga etter for press fra lederen. Ansvaret for det du fører, er fortsatt ditt. ':'Å avslutte kundeforholdet fjerner ikke rapporteringsplikten, og dokumentasjonen av undersøkelsene skal oppbevares. ')+
+        'Når undersøkelsene ikke fjerner mistanken, skal det sendes melding til Økokrim (hvitvaskingsloven § 26). Byrået sender meldingen, og kunden skal ikke få vite om den (§ 28). Innskuddene skal ikke bokføres som noe det ikke finnes dokumentasjon for. Undersøkelsene og vurderingene skal skrives ned og oppbevares. At lederen kjenner kunden godt, endrer ikke plikten.',
+        lu:LU.etikk});
+    }
+    closeDialog();await feedback('Tilbakemelding: kontantinnskuddene hos Vestby Bil',from);},
+  finish(){if(F.hv==='bokfort')adj({tillit:-25});else if(F.hv==='meldt')adj({tillit:6});},
+  epi(){if(F.hv==='bokfort')return 'Slik kunne det gått: Et halvt år senere etterforsker politiet Vestby Bil for hvitvasking. Innskuddene er bokført som salg uten dokumentasjon, og Finanstilsynet spør hvorfor Fjordvik Regnskap verken undersøkte eller rapporterte.';
+    if(F.hv==='meldt')return 'Slik kunne det gått: Byrået sendte melding til Økokrim og dokumenterte undersøkelsene. Ved neste tilsyn kunne Fjordvik Regnskap vise hva som ble gjort, og hvorfor.';
+    return 'Slik kunne det gått: Innskuddene ble stående uavklart. Ingen undersøkte dem videre, og ingen vet hvor pengene kom fra.';},
+  trust(){if(F.hv==='bokfort')return 'Kundetilliten steg da Geir fikk viljen sin, og falt da politiet tok saken. Et ja gjør kunden fornøyd samme dag. Tilliten over tid følger av hvordan det går.';
+    if(F.hv==='meldt')return 'Kundetilliten falt da du stilte spørsmål til Geir. Andre kunder, banker og myndigheter stoler på byrået fordi det følger hvitvaskingsreglene også når kunden er en gammel kjenning.';return '';}},
+
+ {title:'Mva-melding med uforklart differanse hos Lund Elektro AS',
+  jonas:'Jeg rakk ikke å avstemme Lund Elektro før jeg ble satt på et annet oppdrag. Det plager meg. En mva-melding uten avstemming er en gjetning.',
+  async run(){const from=LOG.length;
+    setObj('Randi vil snakke med deg','randi');await waitFor('randi');
+    await say('randi','Mva-meldingen for Lund Elektro AS har frist i dag. Jonas har ført terminen, men han rakk ikke å avstemme før jeg satte ham på et annet oppdrag.','urolig');
+    await say('randi','Kan du sende den inn før du går?','n');
+    closeDialog();setObj('Gå til pulten din og se på mva-meldingen for Lund Elektro AS','desk');await waitFor('desk');
+    const o=['Send meldingen som den er. Fristen er viktigst.','Finn årsaken til differansen før du sender. Det tar omtrent en time.','Vent med innsendingen til i morgen, så Jonas kan avstemme selv.','Send meldingen nå, og avstem i morgen. Send endringsmelding hvis noe er feil.'];
+    const i=await panelChoice('Lund Elektro AS · Mva-melding','<div class="paper"><div class="hd">MVA-MELDING · UTKAST</div><div class="sm">Lund Elektro AS · siste termin</div><div class="ln"><span>Utgående mva</span><span>412 000,00</span></div><div class="ln"><span>Inngående mva</span><span>268 400,00</span></div><div class="ln tot"><span>Å betale</span><span>143 600,00</span></div><div class="sm">Kontroll mot leverandørreskontro:</div><div class="ln"><span>Inngående mva ifølge fakturaene</span><span>230 000,00</span></div><div class="ln tot"><span>Uforklart differanse</span><span>38 400,00</span></div></div>',
+      'Utkastet er klart til innsending. Inngående mva i meldingen er 38 400 kroner høyere enn summen av leverandørfakturaene, og ingen har funnet ut hvorfor. Fristen er ved midnatt.',o);
+    hidePanel();const reason=await askReason(3,'Begrunn hva du gjør med mva-meldingen',o[i]);let rr=-1;
+    if(i===0){adj({integritet:-15,kvalitet:-15,tillit:3});F.mva='feil';}
+    else if(i===2){adj({kvalitet:-10,tillit:-8});F.mva='sen';}
+    else if(i===3){adj({integritet:-6,kvalitet:-6});F.mva='rettet';}
+    else{adj({integritet:8,kvalitet:10});tick(20);
+      await say('randi','Hvorfor er ikke Lund Elektro sendt? Eieren har ringt to ganger. Send den nå, så retter vi etterpå hvis det er noe.','sur');
+      const ro=['Ok. Jeg sender den nå.','Det er en uforklart differanse på 38 400 kroner. Jeg sender ikke en melding jeg vet kan være feil. Jeg rekker å finne feilen før fristen.','Da må du sende den selv.'];
+      rr=await choose('du','Hva svarer du Randi?',ro);closeDialog();const r2=await askReason(4,'Begrunn svaret til Randi',ro[rr]);
+      if(rr===0){F.mva='feil';adj({integritet:-18,kvalitet:-14});await say('randi','Fint. Da er den ute av verden.','n');}
+      else if(rr===1){F.mva='ok';adj({integritet:12,kvalitet:8,tillit:4});await say('randi','Greit. Men da må den være inne i dag.','n');tick(60);
+        await say('ingen','Du går gjennom leverandørfakturaene. En faktura fra Elgross på 153 600 kroner pluss 38 400 kroner i mva er ført to ganger.');
+        await say('ingen','Du retter feilen og sender meldingen. Riktig beløp å betale er 182 000 kroner.');}
+      else{F.mva='feil';adj({integritet:-8,kvalitet:-6});await say('randi','Greit. Jeg sender den.','sur');}
+      closeDialog();
+      mark('press',rr===1,'Du sto fast da Randi ba deg sende meldingen uten avstemming.',rr===0?'Du ga etter da Randi ba deg sende meldingen uten avstemming.':'Du overlot innsendingen til Randi i stedet for å stoppe den.');
+      mark('alt',rr===1,'Du viste Randi at det var tid til både avstemming og innsending innen fristen.','Du viste ikke Randi at avstemmingen kunne gjøres innen fristen.');
+      logItem({title:'Press fra daglig leder',choice:ro[rr],reason:r2,v:rr===1?'good':rr===0?'bad':'mid',
+        why:(rr===1?'Du sa hva som var usikkert, og hva du trengte for å løse det. ':rr===0?'Du ga etter for press fra lederen. Ansvaret for det du sender inn, er fortsatt ditt. ':'Du unngikk å sende meldingen selv, men den ble sendt med feil. ')+
+        'Når lederen ber deg sende noe du ikke har kontrollert, bør du si hva som er usikkert, hva det kan koste kunden, og hvor lang tid du trenger. Da får lederen et reelt valg. Her var det tid til både avstemming og innsending.',
+        lu:LU.etikk});}
+    if(i===0)mark('press',false,'','Du sendte meldingen uten kontroll fordi fristen presset på.');
+    mark('fakta',F.mva==='ok','Du fant årsaken til differansen før mva-meldingen ble sendt.','Differansen på 38 400 kroner ble ikke undersøkt før mva-meldingen ble sendt eller fristen gikk ut.');
+    mark('dok',F.mva==='ok','Meldingen ble sendt med riktig beløp og innen fristen.',F.mva==='sen'?'Meldingen ble ikke sendt innen fristen.':F.mva==='rettet'?'Meldingen ble sendt med for høyt fradrag og måtte rettes med endringsmelding dagen etter.':'Meldingen ble sendt med for høyt fradrag for inngående mva.');
+    LOG.splice(rr>=0?LOG.length-1:LOG.length,0,{title:'Mva-melding med uforklart differanse',choice:o[i],reason,v:i===1?'good':i===3?'mid':'bad',
+      why:(i===1?'Du valgte å finne feilen før du sendte. ':i===0?'Du sendte en melding du hadde grunn til å tro var feil. ':i===2?'Du unngikk å sende noe uriktig, men fristen ble ikke holdt, og det var tid til å avstemme samme dag. ':'Endringsmelding er riktig verktøy når en feil oppdages etterpå. Det er ikke en plan for å sende noe du ikke har kontrollert. ')+
+      'Den som leverer mva-melding, skal gi riktige og fullstendige opplysninger (skatteforvaltningsloven § 8-1). En uforklart differanse mot reskontro betyr at du ikke vet om meldingen er riktig. Her var en leverandørfaktura ført to ganger, slik at fradraget ble 38 400 kroner for høyt. Uriktige opplysninger kan gi tilleggsskatt (§ 14-3), og for sen levering kan gi tvangsmulkt (§ 14-1). Avstemming før innsending er en del av god regnskapsføringsskikk.',
+      lu:LU.lojal});
+    await feedback('Tilbakemelding: mva-meldingen for Lund Elektro',from);},
+  finish(){if(F.mva==='feil')adj({tillit:-20});else if(F.mva==='sen')adj({tillit:-8});else if(F.mva==='ok')adj({tillit:8});},
+  epi(){if(F.mva==='ok')return 'Slik kunne det gått: Lund Elektro betalte riktig avgift, 182 000 kroner. Feilen med fakturaen som var ført to ganger, ble rettet før noen utenfor byrået så den.';
+    if(F.mva==='sen')return 'Slik kunne det gått: Meldingen kom inn for sent, og Lund Elektro fikk tvangsmulkt. Feilen ble funnet dagen etter.';
+    if(F.mva==='rettet')return 'Slik kunne det gått: Dagen etter fant du fakturaen som var ført to ganger, og sendte endringsmelding. Lund Elektro betalte riktig avgift, men den første meldingen var feil da den ble sendt.';
+    return 'Slik kunne det gått: Åtte måneder senere har Skatteetaten kontroll hos Lund Elektro. Fradraget var 38 400 kroner for høyt. Selskapet må betale beløpet med renter og får tilleggsskatt, og eieren spør hvorfor byrået ikke oppdaget feilen.';},
+  trust(){if(F.mva==='ok')return 'Kundetilliten steg fordi meldingen ble riktig. Kunden merket ikke at den ble sendt senere på dagen enn Randi ønsket.';
+    if(F.mva==='feil')return 'Kunden merket ingenting den dagen meldingen ble sendt. Tilliten falt da kontrollen kom.';return '';}}
+];
+
+function pickDay(){const B=[ADVICE,BOOKS,ETHICS],hm=location.hash.match(/^#dag-(\d)(\d)(\d)$/);let ix=null,fixed=false;
+  if(hm){ix=[+hm[1]-1,+hm[2]-1,+hm[3]-1];if(ix.some((v,i)=>v<0||v>=B[i].length))ix=null;else fixed=true;}
+  if(!ix){let prev=[];try{prev=JSON.parse(localStorage.getItem('byraaet-sist')||'[]')||[];}catch(e){prev=[];}
+    ix=B.map((b,i)=>{let v=Math.floor(Math.random()*b.length);if(b.length>1&&v===prev[i])v=(v+1+Math.floor(Math.random()*(b.length-1)))%b.length;return v;});}
+  try{localStorage.setItem('byraaet-sist',JSON.stringify(ix));}catch(e){}
+  return {ix,fixed,code:ix.map(v=>v+1).join(''),a:ADVICE[ix[0]],b:BOOKS[ix[1]],e:ETHICS[ix[2]]};}
+async function day(){DAY=pickDay();const A=DAY.a,B=DAY.b,E=DAY.e;npcs[2].id=A.who;things.kunde.label='Snakk med '+A.short;
+  await say('ingen','Mandag morgen, klokka 08:00. Det er første uka di som regnskapsfører hos Fjordvik Regnskap AS.');
   closeDialog();setObj('Snakk med Randi på kontoret til høyre','randi');
   await waitFor('randi');
   await say('randi','God morgen! Fint at du er her. Du får tre ting i dag.');
-  await say('randi','Klokka ni kommer Selma Aune. Hun skal starte bakeri og vil ha råd om selskapsform. Hun venter på møterommet.');
-  await say('randi','Etterpå ligger det bilag fra Bråten Bygg AS på pulten din. Tor Bråten er en av de største kundene våre, så vær nøye.');
+  await say('randi',A.brief);await say('randi',B.brief);
   await say('randi','Og husk: du fører ikke bare tall. Kundene kommer til oss fordi de vil ha råd.');
-  closeDialog();stage=1;npcs[2].present=true;setClock(540);sfx.open();setObj('Møt Selma Aune på møterommet til venstre','selma');
-  await waitFor('selma');await case1();
-  stage=2;npcs[2].present=false;setClock(Math.max(clock,630));setObj('Gå til pulten din og før bilagene fra Bråten Bygg','desk');
-  await waitFor('desk');await case2();
-  stage=3;setClock(Math.max(clock,840));ringing=true;sfx.ring();const ringT=setInterval(()=>{if(ringing&&canMove())sfx.ring();},2600);setObj('Telefonen ringer. Ta den på pulten din','desk');
-  await waitFor('desk');ringing=false;clearInterval(ringT);await case3();
-  stage=4;setClock(960);setObj('Arbeidsdagen er over',null);
-  if(F.backdated)adj({tillit:-30});else if(F.randi===1)adj({tillit:10});
-  report();
-}
-
-async function case1(){const from=LOG.length;
-  await say('selma','Hei! Jeg skal åpne bakeri i sentrum, Aune Surdeig. Naboen min sier at jeg må ha AS fordi det gir lavere skatt. Stemmer det?');
-  const opts=['AS. Det er nesten alltid det beste valget.','Det kommer an på situasjonen din. Kan jeg stille noen spørsmål først?','Enkeltpersonforetak. Det er billigst og enklest å starte.'];
-  const a=await choose('du','Hva svarer du?',opts);
-  if(a===1){adj({kvalitet:8,tillit:5});await say('selma','Ja, selvfølgelig. Spør i vei.');}
-  else{adj({kvalitet:-10});await say('selma','Å? Hvorfor det? Du vet jo ikke noe om planene mine ennå.');await say('du','Det har du rett i. La meg stille noen spørsmål først.');}
-  logItem({title:'Råd om selskapsform: første svar',choice:opts[a],v:a===1?'good':'bad',why:a===1?'Et råd må bygge på kundens faktiske situasjon. Du kartla før du konkluderte.':'Du konkluderte før du kjente risiko, finansiering og behov. Rådet kan bli riktig, men bare ved flaks.',lu:'6093 · kan gi råd til klienter fra oppstart til avslutning av en bedrift'});
-  const qs=[
-    {k:'laan',t:'Hva må du investere, og hvordan skal du finansiere det?',r:'Jeg må låne 600 000 kroner til ovn og innredning. Og jeg binder meg til en leiekontrakt på fem år.'},
-    {k:'ansatte',t:'Skal du ha ansatte?',r:'To på deltid fra første dag. Jeg klarer ikke å stå i butikken og bake samtidig.'},
-    {k:'privat',t:'Hvordan er privatøkonomien din? Eier du bolig?',r:'Samboeren min og jeg eier huset sammen. Det er det jeg er mest redd for å miste hvis dette går galt.'},
-    {k:'overskudd',t:'Hva venter du av overskudd de første årene?',r:'Lite de to første årene, tror jeg. Men jeg må ta ut en vanlig lønn for å klare meg.'},
-    {k:'ek',t:'Hvor mye egne penger kan du skyte inn?',r:'Jeg har spart 150 000 kroner.'},
-    {k:'brod',t:'Hva slags brød skal du bake?',r:'Surdeig på gammelt korn! Spelt, emmer og svedjerug. Du må komme innom og smake.'}];
-  const facts=[];let left=3;
-  while(left>0){const list=qs.filter(q=>!q.done);const i=await choose('du','Du har tid til '+left+(left===1?' spørsmål til.':' spørsmål til.'),list.map(q=>q.t).concat(['Jeg har det jeg trenger.']));
-    if(i===list.length)break;const q=list[i];q.done=true;left--;tick(10);facts.push(q.k);await say('selma',q.r);if(q.k==='brod')adj({tillit:4});else adj({kvalitet:3});}
-  const risk=facts.some(k=>k==='laan'||k==='privat'||k==='ansatte');F.first=a;F.risk=risk;
-  const ropts=['Jeg anbefaler aksjeselskap.','Jeg anbefaler enkeltpersonforetak.','Dette kan jeg ikke gi råd om. Du bør snakke med en advokat.'];
-  const r=await choose('du','Selma ser spent på deg. Hva anbefaler du?',ropts);closeDialog();
-  const reason=await askReason(1,'Begrunn rådet til Selma',ropts[r]);
-  F.advice=r;
-  if(r===0){adj({kvalitet:risk?10:4,tillit:4});await say('selma','Det gir mening. Da går jeg for AS.');}
-  else if(r===1){adj({kvalitet:-8});await say('selma','Ok. Da hefter jeg vel for alt selv, da? Det må jeg tenke på.');}
-  else{adj({kvalitet:-4,tillit:-8});await say('selma','Å. Jeg trodde det var sånt dere kunne hjelpe med.');}
-  logItem({title:'Råd om selskapsform: anbefalingen',choice:ropts[r],reason,v:r===0?(risk?'good':'mid'):'bad',
-    why:(r===0?(risk?'Rådet følger av det du fant ut. ':'Rådet er forsvarlig, men du spurte ikke om det som avgjør saken: lån, leiekontrakt, ansatte og bolig. '):r===1?'Med lån på 600 000 kroner, fem års leiekontrakt og ansatte er personlig ansvar en stor risiko for Selma. ':'Valg av selskapsform er vanlig rådgivning for en regnskapsfører. Å sende kunden videre uten grunn svekker tilliten. ')+
-    'I et AS hefter eieren som hovedregel bare for innskutt kapital, og minstekravet til aksjekapital er 30 000 kroner. I et enkeltpersonforetak hefter hun personlig for all gjeld. Som ansatt i eget AS får hun også samme rettigheter som andre arbeidstakere. Et godt råd nevner også ulempene: AS har flere formelle krav, og banken kan kreve personlig kausjon for lånet, slik at ansvarsbegrensningen ikke gjelder fullt ut. Rådet bør gis skriftlig.',
-    lu:'6093 · kan gi råd til klienter fra oppstart til avslutning av en bedrift'});
-  await say('selma','En ting til. Kan dere ikke bare ta alt papirarbeidet fra i dag? Jeg har en bunke kvitteringer i veska.');
-  const oopts=['Klart, gi meg bunken, så starter vi i dag.','Gjerne. Først må jeg kontrollere legitimasjonen din, og vi må ha en skriftlig oppdragsavtale.'];
-  const o=await choose('du','Hva svarer du?',oopts);F.onboard=o;
-  if(o===1){adj({integritet:8,kvalitet:8});await say('selma','Ryddig. Jeg har passet med meg.');}
-  else{adj({integritet:-10,kvalitet:-8,tillit:3});await say('selma','Så enkelt! Her er de.');}
-  logItem({title:'Oppstart av kundeforholdet',choice:oopts[o],v:o===1?'good':'bad',why:'Regnskapsførere er rapporteringspliktige etter hvitvaskingsloven og skal gjennomføre kundetiltak før kundeforholdet etableres. Regnskapsførerloven krever skriftlig oppdragsavtale. Avtalen beskytter også deg, fordi den viser hva du har påtatt deg og hva kunden selv har ansvar for.',lu:'6091 · kan anvende regler om rettigheter og plikter og god regnskapsføringsskikk, herunder risiko- og hvitvaskingsregelverk'});
-  closeDialog();await feedback('Tilbakemelding: møtet med Selma',from);
-}
-
-const BILAG=[
- {title:'Bilag 1 av 3',paper:'<div class="hd">BRYGGA MAT &amp; VIN</div><div class="sm">Org.nr. 987 654 321 MVA · 14.11.</div><div class="ln"><span>Mat, 4 kuverter</span><span>3 400,00</span></div><div class="ln"><span>Vin</span><span>1 400,00</span></div><div class="ln tot"><span>Sum inkl. mva</span><span>4 800,00</span></div><div class="sm">Betalt med firmakort ****4471</div>',note:'',
-  q:'Kortkvittering fra restaurant. Det følger ingen forklaring med.',
-  o:['Bokfør som representasjon med fradrag for inngående mva.','Bokfør som møtekostnad uten å spørre.','Be Tor opplyse formålet og hvem som deltok før du bokfører.','Avvis bilaget og la være å bokføre det.'],ok:2,
-  why:'Dokumentasjon av bevertning skal vise formålet og hvem som deltok (bokføringsforskriften § 5-10). Uten det kan du ikke vurdere om kostnaden er fradragsberettiget. Det er uansett ikke fradrag for inngående mva på servering og representasjon (merverdiavgiftsloven § 8-3). Kostnaden er betalt av selskapet og skal bokføres, så å avvise bilaget løser ingenting.',
-  lu:'6091 · kan behandle og registrere transaksjoner og virksomhetshendelser'},
- {title:'Bilag 2 av 3',paper:'<div class="hd">VERKTØYHUSET AS</div><div class="sm">Faktura 20417 · Org.nr. 912 345 678 MVA</div><div class="sm">Kunde: Bråten Bygg AS</div><div class="ln"><span>Kapp- og gjærsag</span><span>6 250,00</span></div><div class="ln"><span>Mva 25 %</span><span>1 562,50</span></div><div class="ln tot"><span>Å betale</span><span>7 812,50</span></div>',note:'',
-  q:'Faktura for en kappsag til verkstedet. Fakturaen har alle opplysninger.',
-  o:['Aktiver saga som driftsmiddel og avskriv den.','Kostnadsfør direkte med fradrag for inngående mva.','Kostnadsfør direkte uten fradrag for mva.'],ok:1,
-  why:'Saga er til bruk i den avgiftspliktige virksomheten, og fakturaen oppfyller kravene til salgsdokument. Da er det fradrag for inngående mva. Kostprisen er under grensen på 30 000 kroner for betydelige driftsmidler (skatteloven § 14-40), så den kostnadsføres direkte, for eksempel på konto 6500 Motordrevet verktøy.',
-  lu:'6018 · kan beregne korrekt merverdiavgift med henvisning til hjemmel'},
- {title:'Bilag 3 av 3',paper:'<div class="hd">ELEKTROLAGERET</div><div class="sm">Faktura 88102 · Org.nr. 923 456 789 MVA</div><div class="sm">Kunde: Bråten Bygg AS<br>Levert til: Tor Bråten, Granlia 12</div><div class="ln"><span>TV 65 tommer</span><span>11 992,00</span></div><div class="ln"><span>Mva 25 %</span><span>2 998,00</span></div><div class="ln tot"><span>Å betale</span><span>14 990,00</span></div>',note:'Kontorutstyr. Før det på kontoret. – Tor',
-  q:'Faktura for en TV. Den er levert til Tors privatadresse.',
-  o:['Bokfør som kontorutstyr med fradrag for mva, slik Tor ber om.','Ring Tor og spør hvor TV-en står og hva den brukes til.','Bokfør som privat uttak uten å spørre.'],ok:1,why:'',lu:''}
-];
-async function case2(){const from=LOG.length;
-  for(let n=0;n<BILAG.length;n++){const B=BILAG[n];
-    showPanel('<h2>Bråten Bygg AS · '+B.title+'</h2><div class="cols"><div class="left"><div class="paper">'+B.paper+'</div>'+(B.note?'<div class="note">'+esc(B.note)+'</div>':'')+'</div><div class="right"><p>'+esc(B.q)+'</p><p class="sub">Hva gjør du?</p><div class="dopts" id="bo"></div><div id="bfb"></div></div></div>');
-    const i=await new Promise(res=>{optHandlers=[];B.o.forEach((t,k)=>{const bt=document.createElement('button');bt.type='button';bt.className='opt';bt.innerHTML='<span class="k">'+(k+1)+'</span>'+esc(t);const h=()=>{sfx.pick();optHandlers=null;res(k);};bt.addEventListener('click',h);optHandlers.push(h);$('bo').appendChild(bt);});});
-    $('bo').innerHTML='<p><span class="sub">Du valgte:</span> '+esc(B.o[i])+'</p>';tick(25);
-    if(n<2){const good=i===B.ok;F['b'+(n+1)]=i;adj({kvalitet:good?8:-8});logItem({title:B.title+': '+(n===0?'restaurantkvittering':'kappsag'),choice:B.o[i],v:good?'good':'bad',why:B.why,lu:B.lu});
-      $('bfb').innerHTML='<div class="fb '+(good?'good':'bad')+'"><div class="v">'+(good?'Riktig behandlet':'Ikke riktig')+'</div><p>'+esc(B.why)+'</p></div><div class="row"><button class="btn" id="bnext" type="button">Neste bilag</button></div>';
-      await clicked('#bnext');}
-    else{let v,why,choice=B.o[i],reason='';F.tvCalled=i===1;
-      if(i===1){hidePanel();
-        await say('tor','TV-en? Den står hjemme i stua. Men jeg ser jo på byggeprogrammer, he he. Bare før den på firmaet.');
-        const t=['Greit, jeg fører den som kontorutstyr.','Jeg fører den som kontorutstyr, men uten fradrag for mva.','Det er en privat kostnad. Selskapet får ikke fradrag, og du må betale den tilbake eller ta den som lønn eller utbytte.'];
-        const c=await choose('du','Hva svarer du Tor?',t);closeDialog();choice='Ringte Tor. '+t[c];reason=await askReason(2,'Begrunn behandlingen av TV-fakturaen',t[c]);F.tv=c;
-        if(c===2){adj({integritet:10,kvalitet:8,tillit:-3});v='good';await say('tor','Hmf. Greit. Jeg overfører pengene i kveld.');}
-        else if(c===0){adj({integritet:-15,kvalitet:-8,tillit:3});v='bad';await say('tor','Sånn skal det være!');}
-        else{adj({integritet:-5,kvalitet:-5});v='bad';await say('tor','Jaja, bedre enn ingenting.');}
-        closeDialog();}
-      else if(i===0){F.tv=0;adj({integritet:-15,kvalitet:-8,tillit:3});v='bad';}
-      else{F.tv=3;adj({kvalitet:2,tillit:-5});v='mid';}
-      why=(v==='good'?'Du avklarte fakta før du bokførte, og du forklarte konsekvensen for kunden. ':v==='mid'?'Konklusjonen er trolig riktig, men du bokførte uten å avklare fakta med kunden. Leveringsadressen er et varsel, ikke et bevis. ':'En TV i eierens stue er en privat kostnad. Å føre den som kontorutstyr gir uriktig regnskap og uriktig skatte- og mva-grunnlag. Det gjelder også om du dropper mva-fradraget. ')+
-        'Private kostnader gir verken skattefradrag eller mva-fradrag for selskapet. Når selskapet har betalt, må beløpet føres som en fordring på Tor som han gjør opp, eller behandles som lønn eller utbytte. En fordring som blir stående, kan bli regnet som lån til aksjonær, som skattlegges som utbytte (skatteloven § 10-11).';
-      logItem({title:'Bilag 3 av 3: TV levert privat',choice,reason,v,why,lu:'6018 · forstår betydningen av korrekt og lojal angivelse av grunnlaget for skatt og merverdiavgift'});}
-  }
-  hidePanel();await feedback('Tilbakemelding: bilagene fra Bråten Bygg',from);
-}
-
-async function case3(){const from=LOG.length;
-  await say('tor','Hei, det er Tor. Jeg trenger en tjeneste. Banken vil se foreløpige tall for i fjor før de gir oss byggelånet. Svaret må inn på fredag.');
-  await say('tor','Vi fakturerte Solvik-prosjektet i januar, 480 000 kroner. Kan du ikke bare datere fakturaen til 31. desember? Jobben var jo nesten ferdig.');
-  const o=['Greit, jeg daterer den til 31. desember.','Nei. Det kan jeg ikke gjøre.','Jeg kan ikke endre datoen. Men hvor mye av arbeidet var faktisk utført før nyttår?','Jeg må snakke med Randi før jeg svarer.'];
-  const a=await choose('du','Hva svarer du?',o);F.tor=a;let firstReason='';
-  if(a===0){closeDialog();firstReason=await askReason(3,'Begrunn svaret til Tor',o[0]);adj({integritet:-30,kvalitet:-15,tillit:5});F.backdated=true;await say('tor','Topp! Jeg visste du var til å stole på.');}
-  else{
-    if(a===1){adj({integritet:10,tillit:-8});await say('tor','Seriøst? Det er jo bare en dato.');}
-    else if(a===2){adj({integritet:12,kvalitet:10,tillit:-2});await say('tor','Ærlig talt? Vi startet rett før jul. Det meste ble gjort i januar.');await say('du','Da er inntekten opptjent i år, og fakturaen skal vise når arbeidet faktisk ble levert. Jeg kan hjelpe deg med noe annet til banken: riktige tall, ordrereserven og et likviditetsbudsjett.');await say('tor','Banken vil ha et pent resultat, ikke et budsjett.');}
-    else{await say('tor','Gjør det. Men jeg ringer henne selv også.');}
-    closeDialog();if(a!==3)firstReason=await askReason(3,'Begrunn svaret til Tor',o[a]);
-    if(a!==3)await say('tor','Da ringer jeg Randi. Ha det.');
-  }
-  logItem({title:'Tor vil tilbakedatere en faktura',choice:o[a],reason:firstReason,v:a===0?'bad':a===2?'good':'mid',
-    why:(a===0?'Du gikk med på å lage et regnskap som viser inntekt i feil år. ':a===1?'Du sa nei, og det er riktig. Du kunne i tillegg ha undersøkt fakta og vist Tor en lovlig vei til det han trenger. ':a===2?'Du sa nei til datoen, undersøkte hva som faktisk var utført og tilbød et lovlig alternativ. ':'Å spørre lederen er lov, men svaret på selve spørsmålet er klart, og ansvaret for oppdraget kan du ikke gi fra deg. ')+
-    'Inntekt skal resultatføres når den er opptjent (regnskapsloven § 4-1), og salgsdokumentet skal vise når leveringen skjedde (bokføringsforskriften § 5-1-1). En faktura med uriktig dato for å gi banken et bedre bilde er regnskapsmanipulasjon. En regnskapsfører som medvirker, bryter god regnskapsføringsskikk og risikerer både autorisasjonen og erstatningsansvar overfor banken.',
-    lu:'6090 · har kjennskap til etiske regnskapsfaglige problemstillinger, herunder grensen mot regnskapsmanipulasjon'});
-  if(a!==0){closeDialog();setObj('Randi vil snakke med deg','randi');await waitFor('randi');tick(20);
-    await say('randi','Tor ringte. Han sier han bytter byrå hvis vi ikke hjelper ham med banken. Han står for en femdel av omsetningen vår.');
-    await say('randi','Kan vi ikke finne en pragmatisk løsning på den fakturaen?');
-    const ro=['Ok. Jeg daterer den om.','Nei. Det er regnskapsmanipulasjon, og det er vår autorisasjon som står på spill. Jeg foreslår at vi tilbyr Tor riktige tall med ordrereserve og likviditetsbudsjett, og at jeg dokumenterer saken.','Da får du gjøre det selv.'];
-    const rr=await choose('du','Hva svarer du Randi?',ro);closeDialog();F.randi=rr;const reason=await askReason(4,'Begrunn svaret til Randi',ro[rr]);
-    if(rr===0){F.backdated=true;adj({integritet:-25,kvalitet:-12});await say('randi','Fint. Da er den saken ute av verden.');}
-    else if(rr===1){adj({integritet:12,kvalitet:8,tillit:6});await say('randi','... Du har rett. Jeg skulle ikke ha spurt. Jeg ringer Tor selv og tilbyr ham pakken til banken.');}
-    else{adj({integritet:-8,kvalitet:-5});await say('randi','Greit. Jeg tar det herfra.');}
-    logItem({title:'Press fra daglig leder',choice:ro[rr],reason,v:rr===1?'good':rr===0?'bad':'mid',
-      why:(rr===1?'Du sto fast, forklarte risikoen for byrået og kom med et alternativ som løser kundens egentlige behov. ':rr===0?'Du ga etter for press fra lederen. Ansvaret for det du fører, er fortsatt ditt. ':'Du unngikk å gjøre det selv, men du stoppet det ikke, og du vet ikke hva som blir gjort på et oppdrag du arbeider på. ')+
-      'Kravene til god regnskapsføringsskikk gjelder uansett hvor viktig kunden er for byrået. Når du sier nei, bør du samtidig vise hva du kan gjøre: banken trenger grunnlag for en kredittvurdering, og det kan dere levere med riktige tall. Skriv ned hva som ble spurt om, hva du svarte og hvorfor.',
-      lu:'6366 · kan identifisere og analysere etiske dilemmaer og foreta godt begrunnede valg'});
-  }
-  closeDialog();await feedback('Tilbakemelding: telefonen fra Tor',from);
+  closeDialog();stage=1;npcs[2].present=true;setClock(540);sfx.open();setObj('Møt '+A.name+' på møterommet til venstre','kunde');
+  await waitFor('kunde');await runAdvice(A);
+  stage=2;npcs[2].present=false;setClock(Math.max(clock,630));setObj('Gå til pulten din og før bilagene fra '+B.client,'desk');
+  await waitFor('desk');await runBooks(B);
+  stage=3;setClock(Math.max(clock,840));await E.run();
+  stage=4;setClock(960);setObj('Arbeidsdagen er over',null);E.finish();report();
 }
 
 /* ---------- report ---------- */
-function epilogue(){if(F.backdated)return 'Slik kunne det gått: Tre måneder senere oppdager banken at fakturadatoen ikke stemmer med timelistene. Lånet blir sagt opp, og Fjordvik Regnskap må forklare seg for Finanstilsynet.';
-  if(F.randi===1)return 'Slik kunne det gått: Tor fikk lånet på riktige tall, med ordrereserve og likviditetsbudsjett som vedlegg. Han er fortsatt kunde.';
-  return 'Slik kunne det gått: Randi ordnet saken med Tor på egen hånd. Du vet ikke hva som ble gjort, og du arbeider fortsatt på oppdraget.';}
-function trustNote(){if(F.backdated)return 'Kundetilliten steg da Tor fikk viljen sin, og falt da banken oppdaget feilen. Et ja gjør kunden fornøyd samme dag. Tilliten over tid følger av hvordan det går.';
-  if(F.randi===1)return 'Kundetilliten falt da du sa nei til Tor, og steg igjen da han fikk lånet på riktige tall. Et nei som kommer sammen med et lovlig alternativ, kan styrke kundeforholdet.';return '';}
-function profile(){const it=(ok,g,b)=>({ok:!!ok,t:ok?g:b}),S=[];
-  S.push({name:'Undersøker fakta før du konkluderer',rep:'kartlegging av kundens situasjon før rådgivning (6093 Regnskapsføreren som rådgiver)',items:[
-    it(F.first===1,'Du stilte spørsmål før du svarte Selma.','Du svarte Selma før du kjente situasjonen hennes.'),
-    it(F.risk,'Du spurte om det som avgjør valget av selskapsform: lån, ansatte eller bolig.','Du spurte ikke om lån, ansatte eller bolig før du ga råd om selskapsform.'),
-    it(F.tvCalled,'Du ringte Tor før du bokførte TV-fakturaen.','Du bokførte TV-fakturaen uten å spørre Tor først.'),
-    it(F.tor===2,'Du undersøkte hvor mye av Solvik-prosjektet som var utført før nyttår.','Du undersøkte ikke hvor mye av Solvik-prosjektet som var utført før nyttår.')]});
-  S.push({name:'Krever dokumentasjon og følger formkravene',rep:'dokumentasjonskravene i bokføringsforskriften og kundetiltak etter hvitvaskingsloven (6091 Regnskapsføreryrket og regnskapsorganisering)',items:[
-    it(F.onboard===1,'Du krevde legitimasjon og oppdragsavtale før du tok imot bilagene til Selma.','Du tok imot bilagene til Selma uten kundekontroll og oppdragsavtale.'),
-    it(F.b1===2,'Du ba om formål og deltakere for restaurantkvitteringen.','Du ba ikke om formål og deltakere for restaurantkvitteringen.'),
-    it(F.b2===1,'Du behandlet kappsaga riktig.','Du behandlet kappsaga feil. Den skulle kostnadsføres direkte med fradrag for mva.')]});
-  S.push({name:'Står imot press',rep:'god regnskapsføringsskikk og grensen mot regnskapsmanipulasjon (6090 Årsregnskap og god regnskapsskikk, og 6091)',items:[
-    it(F.tv===2||F.tv===3,'Du førte ikke TV-en som kontorutstyr, selv om Tor ba om det.','Du førte TV-en som kontorutstyr fordi Tor ba om det.'),
-    it(F.tor!==0,'Du sa ikke ja til å tilbakedatere fakturaen da Tor spurte.','Du sa ja til å tilbakedatere fakturaen da Tor spurte.')].concat(F.tor===0?[]:[
-    it(F.randi===1,'Du sto fast da Randi la press på deg.',F.randi===0?'Du ga etter da Randi la press på deg.':'Du overlot avgjørelsen til Randi i stedet for å stoppe tilbakedateringen.')])});
-  S.push({name:'Viser kunden et lovlig alternativ',rep:'rådgivning og formidling av analyse til klienter (6091 og 6093)',items:[
-    it(F.advice===0,'Du ga Selma et konkret råd som passer risikoen hun tar.',F.advice===1?'Rådet til Selma tok ikke hensyn til risikoen hun tar.':'Du ga ikke Selma noe råd.'),
-    it(F.tvCalled&&F.tv===2,'Du forklarte Tor hvordan TV-kjøpet kan gjøres opp: tilbakebetaling, lønn eller utbytte.','Du forklarte ikke Tor hvordan TV-kjøpet kan gjøres opp på lovlig vis.'),
-    it(F.tor===2||F.randi===1,'Du foreslo riktige tall, ordrereserve og likviditetsbudsjett til banken.','Du foreslo ikke noe alternativ Tor kunne ta med til banken.')]});
-  S.forEach(k=>{const n=k.items.filter(i=>i.ok).length;k.level=n===k.items.length?'good':n===0?'bad':'mid';k.label=n===k.items.length?'Dette viste du i dag':n===0?'Dette bør du øve på':'Delvis';});return S;}
-function reportText(refl){const L=[];L.push('BYRÅET – rapport fra arbeidsdagen');if(playerName)L.push('Navn/kandidat: '+playerName);L.push('');L.push(epilogue());L.push('');
+const SKILLS=[['fakta','Undersøker fakta før du konkluderer','å kartlegge fakta før du gir råd eller bokfører (6093 Regnskapsføreren som rådgiver, og 6091)'],
+  ['dok','Krever dokumentasjon og følger formkravene','dokumentasjonskravene i bokføringsforskriften, kundetiltak og rapporteringsplikter (6091 Regnskapsføreryrket og regnskapsorganisering, og 6018)'],
+  ['press','Står imot press','god regnskapsføringsskikk og etiske dilemmaer (6091, 6090 Årsregnskap og god regnskapsskikk, og 6366)'],
+  ['alt','Viser kunden et lovlig alternativ','rådgivning og formidling av analyse til klienter (6091 og 6093)']];
+function epilogue(){return DAY.e.epi();}
+function trustNote(){return DAY.e.trust();}
+function dayLine(){return 'Dagens saker: '+DAY.a.title+'. '+DAY.b.title+'. '+DAY.e.title+'.';}
+function profile(){return SKILLS.filter(s=>PROF[s[0]].length).map(s=>{const items=PROF[s[0]],n=items.filter(i=>i.ok).length,all=n===items.length;
+  return {name:s[1],rep:s[2],items,level:all?'good':n===0?'bad':'mid',label:all?'Dette viste du i dag':n===0?'Dette bør du øve på':'Delvis'};});}
+function reportText(refl){const L=[];L.push('BYRÅET – rapport fra arbeidsdagen');if(playerName)L.push('Navn/kandidat: '+playerName);L.push(dayLine()+' (dag '+DAY.code+')');L.push('');L.push(epilogue());L.push('');
   L.push('HVA DU VISTE I DAG');profile().forEach(k=>{L.push(k.name+' ['+k.label+']');k.items.forEach(i=>L.push('   '+(i.ok?'+ ':'- ')+i.t));if(k.level!=='good')L.push('   Repeter: '+k.rep);L.push('');});
   L.push('REFLEKSJON: Hvilket valg ville du gjort annerledes, og hvorfor?');L.push(refl?refl:'(ikke besvart)');L.push('');
   L.push('VALGENE');LOG.forEach((o,i)=>{L.push((i+1)+'. '+o.title+' ['+VERD[o.v]+']');L.push('   Valg: '+o.choice);if(o.reason)L.push('   Begrunnelse: '+o.reason);L.push('   Læringsutbytte: '+o.lu);L.push('');});
@@ -666,13 +901,15 @@ function report(){sfx.open();const tn=trustNote();
   const prof=profile().map(k=>'<div class="fb prof '+k.level+'"><div class="v">'+esc(k.label)+' · '+esc(k.name)+'</div><ul>'+k.items.map(i=>'<li class="'+(i.ok?'ok':'no')+'">'+esc(i.t)+'</li>').join('')+'</ul>'+(k.level!=='good'?'<p><span class="sub">Repeter:</span> '+esc(k.rep)+'</p>':'')+'</div>').join('');
   showPanel('<h2>Arbeidsdagen er over</h2><p>'+esc(epilogue())+'</p>'+(tn?'<p>'+esc(tn)+'</p>':'')+'<h3>Hva du viste i dag</h3>'+prof+
    '<h3>Refleksjon</h3><label for="refl">Hvilket valg ville du gjort annerledes, og hvorfor? Svaret kommer med i rapporten.</label><textarea id="refl" maxlength="1200"></textarea>'+
-   '<h3>Rapport til innlevering</h3><p class="sub">Kopier teksten og lim den inn i innleveringen.</p><label for="rep">Rapport</label><textarea id="rep" readonly style="min-height:180px;max-width:100%"></textarea><div class="row"><button class="btn" id="copy" type="button">Kopier rapport</button><button class="btn sec" id="again" type="button">Spill på nytt</button><span class="count" id="copied"></span></div>'+
+   '<h3>Rapport til innlevering</h3><p class="sub">Kopier teksten og lim den inn i innleveringen.</p><label for="rep">Rapport</label><textarea id="rep" readonly style="min-height:180px;max-width:100%"></textarea><div class="row"><button class="btn" id="copy" type="button">Kopier rapport</button><button class="btn sec" id="again" type="button">Spill en ny dag</button><button class="btn sec" id="same" type="button">Spill samme dag igjen</button><span class="count" id="copied"></span></div>'+
+   '<p class="sub">'+esc(dayLine())+' Sakene trekkes tilfeldig hver gang. Skal flere spille akkurat denne dagen, legg til #dag-'+DAY.code+' bak adressen til spillet.</p>'+
    '<h3>Alle valgene dine</h3>'+fbHtml(LOG)+
    '<p class="sub">Målerne ved dagens slutt: kundetillit '+M.tillit+', faglig kvalitet '+M.kvalitet+', integritet '+M.integritet+'. Tallene bygger på '+LOG.length+' valg og sier ikke hvor godt du kan faget.</p><p class="sub">Prøveversjon. Det faglige innholdet er ikke kvalitetssikret.</p>');
   $('rep').value=reportText('');
   $('refl').addEventListener('input',()=>{$('rep').value=reportText($('refl').value.trim());$('copied').textContent='';});
   $('copy').addEventListener('click',()=>{const done=()=>{$('copied').textContent='Kopiert';};const fb=()=>{$('rep').focus();$('rep').select();$('copied').textContent='Teksten er markert. Kopier med Ctrl+C.';};try{navigator.clipboard.writeText($('rep').value).then(done,fb);}catch(e){fb();}});
-  $('again').addEventListener('click',()=>location.reload());
+  $('again').addEventListener('click',()=>{try{history.replaceState(null,'',location.pathname+location.search);}catch(e){location.hash='';}location.reload();});
+  $('same').addEventListener('click',()=>{location.hash='dag-'+DAY.code;location.reload();});
 }
 
 /* ---------- title and boot ---------- */
@@ -690,10 +927,10 @@ window.addEventListener('resize',()=>{fit();shrinkToFit();});fit();
 $('fs').addEventListener('click',()=>{const d=document;if(d.fullscreenElement)d.exitFullscreen();else if(d.documentElement.requestFullscreen)d.documentElement.requestFullscreen().catch(()=>{$('fs').hidden=true;});});
 document.addEventListener('fullscreenchange',()=>{$('fs').textContent=document.fullscreenElement?'Avslutt fullskjerm':'Fullskjerm';fit();shrinkToFit();});
 if(!document.documentElement.requestFullscreen)$('fs').hidden=true;
-function title(){showPanel('<div class="tcols"><canvas id="banner" width="192" height="72" aria-hidden="true"></canvas><div class="tbody"><h1>BYRÅET</h1><p style="font-size:24px;margin:2px 0 6px">En arbeidsdag hos Fjordvik Regnskap AS</p><label for="pname">Navn eller kandidatnummer (valgfritt)</label><input type="text" id="pname" maxlength="60" autocomplete="off"><div class="row"><button class="btn" id="go" type="button">Start dagen ▶</button></div><p class="sub">Gå med piltaster eller WASD, eller klikk dit du vil gå. Snakk og bruk ting med E eller mellomrom.</p><p class="sub">En runde tar 20–30 minutter. Prøveversjon: fagstoffet er ikke kvalitetssikret.</p></div></div>',true);drawBanner();titleOpen=true;shrinkToFit();setTimeout(shrinkToFit,700);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(shrinkToFit);
+function title(){showPanel('<div class="tcols"><canvas id="banner" width="192" height="72" aria-hidden="true"></canvas><div class="tbody"><h1>BYRÅET</h1><p style="font-size:24px;margin:2px 0 6px">En arbeidsdag hos Fjordvik Regnskap AS</p><label for="pname">Navn eller kandidatnummer (valgfritt)</label><input type="text" id="pname" maxlength="60" autocomplete="off"><div class="row"><button class="btn" id="go" type="button">Start dagen ▶</button></div><p class="sub">Gå med piltaster eller WASD, eller klikk dit du vil gå. Snakk og bruk ting med E eller mellomrom.</p><p class="sub">En runde tar 20–30 minutter. Sakene trekkes tilfeldig, så dagene blir ulike. Prøveversjon: fagstoffet er ikke kvalitetssikret.</p></div></div>',true);drawBanner();titleOpen=true;shrinkToFit();setTimeout(shrinkToFit,700);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(shrinkToFit);
   $('go').addEventListener('click',()=>{playerName=$('pname').value.trim();titleOpen=false;sfx.open();hidePanel();started=true;day();});}
 requestAnimationFrame(frame);
-if(location.hash==='#demo'){started=true;P.x=P.tx=20;P.y=P.ty=5;npcs[2].present=true;setClock(600);setObj('Møt Selma Aune på møterommet til venstre','selma');choose('du','Selma ser spent på deg. Hva anbefaler du?',['Jeg anbefaler aksjeselskap.','Jeg anbefaler enkeltpersonforetak.','Dette kan jeg ikke gi råd om. Du bør snakke med en advokat.']);}
+if(location.hash==='#demo'){started=true;P.x=P.tx=20;P.y=P.ty=5;npcs[2].present=true;setClock(600);setObj('Møt Selma Aune på møterommet til venstre','kunde');choose('du','Selma ser spent på deg. Hva anbefaler du?',['Jeg anbefaler aksjeselskap.','Jeg anbefaler enkeltpersonforetak.','Dette kan jeg ikke gi råd om. Du bør snakke med en advokat.']);}
 else{const hm=location.hash.match(/^#scene-(\w+)-(\w+)$/);if(hm&&SCENES[hm[1]]){started=true;setClock(+hm[2]);say(hm[1],'Hei! Jeg skal åpne bakeri i sentrum, Aune Surdeig. Naboen min sier at jeg må ha AS fordi det gir lavere skatt. Stemmer det?');}else title();}
 })();
 </script>
