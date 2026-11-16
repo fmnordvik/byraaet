@@ -82,6 +82,10 @@ label{display:block;color:var(--muted);margin:8px 0 3px}
 .tag{display:inline-block;font-size:18px;color:var(--muted);border:1px solid var(--line);padding:0 6px;margin-top:4px}
 .help{color:var(--muted);font-size:19px}
 .count{color:var(--muted);font-size:18px}
+.prof ul{margin:4px 0;padding:0;list-style:none}
+.prof li{padding-left:1.3em;text-indent:-1.3em;max-width:68ch}
+.prof li.ok::before{content:"\2713\00a0";color:var(--good)}
+.prof li.no::before{content:"\2717\00a0";color:var(--bad)}
 .wrap.narrow .dialog{position:static;max-height:none;margin:0;border-width:3px 0 0;box-shadow:none}
 .wrap.narrow .stage.has-panel canvas#cv,.wrap.narrow .stage.has-panel .hint{display:none}
 .wrap.narrow .panel{position:static}
@@ -444,7 +448,7 @@ async function case1(){const from=LOG.length;
   const facts=[];let left=3;
   while(left>0){const list=qs.filter(q=>!q.done);const i=await choose('du','Du har tid til '+left+(left===1?' spørsmål til.':' spørsmål til.'),list.map(q=>q.t).concat(['Jeg har det jeg trenger.']));
     if(i===list.length)break;const q=list[i];q.done=true;left--;tick(10);facts.push(q.k);await say('selma',q.r);if(q.k==='brod')adj({tillit:4});else adj({kvalitet:3});}
-  const risk=facts.some(k=>k==='laan'||k==='privat'||k==='ansatte');
+  const risk=facts.some(k=>k==='laan'||k==='privat'||k==='ansatte');F.first=a;F.risk=risk;
   const ropts=['Jeg anbefaler aksjeselskap.','Jeg anbefaler enkeltpersonforetak.','Dette kan jeg ikke gi råd om. Du bør snakke med en advokat.'];
   const r=await choose('du','Selma ser spent på deg. Hva anbefaler du?',ropts);closeDialog();
   const reason=await askReason(1,'Begrunn rådet til Selma',ropts[r]);
@@ -485,10 +489,10 @@ async function case2(){const from=LOG.length;
     showPanel('<h2>Bråten Bygg AS · '+B.title+'</h2><div class="cols"><div class="left"><div class="paper">'+B.paper+'</div>'+(B.note?'<div class="note">'+esc(B.note)+'</div>':'')+'</div><div class="right"><p>'+esc(B.q)+'</p><p class="sub">Hva gjør du?</p><div class="dopts" id="bo"></div><div id="bfb"></div></div></div>');
     const i=await new Promise(res=>{optHandlers=[];B.o.forEach((t,k)=>{const bt=document.createElement('button');bt.type='button';bt.className='opt';bt.innerHTML='<span class="k">'+(k+1)+'</span>'+esc(t);const h=()=>{sfx.pick();optHandlers=null;res(k);};bt.addEventListener('click',h);optHandlers.push(h);$('bo').appendChild(bt);});});
     $('bo').innerHTML='<p><span class="sub">Du valgte:</span> '+esc(B.o[i])+'</p>';tick(25);
-    if(n<2){const good=i===B.ok;adj({kvalitet:good?8:-8});logItem({title:B.title+': '+(n===0?'restaurantkvittering':'kappsag'),choice:B.o[i],v:good?'good':'bad',why:B.why,lu:B.lu});
+    if(n<2){const good=i===B.ok;F['b'+(n+1)]=i;adj({kvalitet:good?8:-8});logItem({title:B.title+': '+(n===0?'restaurantkvittering':'kappsag'),choice:B.o[i],v:good?'good':'bad',why:B.why,lu:B.lu});
       $('bfb').innerHTML='<div class="fb '+(good?'good':'bad')+'"><div class="v">'+(good?'Riktig behandlet':'Ikke riktig')+'</div><p>'+esc(B.why)+'</p></div><div class="row"><button class="btn" id="bnext" type="button">Neste bilag</button></div>';
       await clicked('#bnext');}
-    else{let v,why,choice=B.o[i],reason='';
+    else{let v,why,choice=B.o[i],reason='';F.tvCalled=i===1;
       if(i===1){hidePanel();
         await say('tor','TV-en? Den står hjemme i stua. Men jeg ser jo på byggeprogrammer, he he. Bare før den på firmaet.');
         const t=['Greit, jeg fører den som kontorutstyr.','Jeg fører den som kontorutstyr, men uten fradrag for mva.','Det er en privat kostnad. Selskapet får ikke fradrag, og du må betale den tilbake eller ta den som lønn eller utbytte.'];
@@ -543,13 +547,41 @@ async function case3(){const from=LOG.length;
 function epilogue(){if(F.backdated)return 'Slik kunne det gått: Tre måneder senere oppdager banken at fakturadatoen ikke stemmer med timelistene. Lånet blir sagt opp, og Fjordvik Regnskap må forklare seg for Finanstilsynet.';
   if(F.randi===1)return 'Slik kunne det gått: Tor fikk lånet på riktige tall, med ordrereserve og likviditetsbudsjett som vedlegg. Han er fortsatt kunde.';
   return 'Slik kunne det gått: Randi ordnet saken med Tor på egen hånd. Du vet ikke hva som ble gjort, og du arbeider fortsatt på oppdraget.';}
-function reportText(){const L=[];L.push('BYRÅET – rapport fra arbeidsdagen');if(playerName)L.push('Navn/kandidat: '+playerName);L.push('Kundetillit '+M.tillit+' · Faglig kvalitet '+M.kvalitet+' · Integritet '+M.integritet+' (skala 0–100)');L.push('');
-  LOG.forEach((o,i)=>{L.push((i+1)+'. '+o.title+' ['+VERD[o.v]+']');L.push('   Valg: '+o.choice);if(o.reason)L.push('   Begrunnelse: '+o.reason);L.push('   Læringsutbytte: '+o.lu);L.push('');});
-  L.push(epilogue());L.push('');L.push('Prøveversjon. Det faglige innholdet er ikke kvalitetssikret.');return L.join('\n');}
-function report(){const good=LOG.filter(o=>o.v==='good').length;sfx.open();
-  showPanel('<h2>Arbeidsdagen er over</h2><p>'+good+' av '+LOG.length+' valg var gode. Kundetillit '+M.tillit+', faglig kvalitet '+M.kvalitet+', integritet '+M.integritet+'.</p><p>'+esc(epilogue())+'</p><h3>Valgene dine</h3>'+fbHtml(LOG)+
-   '<h3>Rapport til innlevering</h3><p class="sub">Kopier teksten og lim den inn i innleveringen.</p><label for="rep">Rapport</label><textarea id="rep" readonly style="min-height:180px;max-width:100%"></textarea><div class="row"><button class="btn" id="copy" type="button">Kopier rapport</button><button class="btn sec" id="again" type="button">Spill på nytt</button><span class="count" id="copied"></span></div><p class="sub">Prøveversjon. Det faglige innholdet er ikke kvalitetssikret.</p>');
-  $('rep').value=reportText();
+function trustNote(){if(F.backdated)return 'Kundetilliten steg da Tor fikk viljen sin, og falt da banken oppdaget feilen. Et ja gjør kunden fornøyd samme dag. Tilliten over tid følger av hvordan det går.';
+  if(F.randi===1)return 'Kundetilliten falt da du sa nei til Tor, og steg igjen da han fikk lånet på riktige tall. Et nei som kommer sammen med et lovlig alternativ, kan styrke kundeforholdet.';return '';}
+function profile(){const it=(ok,g,b)=>({ok:!!ok,t:ok?g:b}),S=[];
+  S.push({name:'Undersøker fakta før du konkluderer',rep:'kartlegging av kundens situasjon før rådgivning (6093 Regnskapsføreren som rådgiver)',items:[
+    it(F.first===1,'Du stilte spørsmål før du svarte Selma.','Du svarte Selma før du kjente situasjonen hennes.'),
+    it(F.risk,'Du spurte om det som avgjør valget av selskapsform: lån, ansatte eller bolig.','Du spurte ikke om lån, ansatte eller bolig før du ga råd om selskapsform.'),
+    it(F.tvCalled,'Du ringte Tor før du bokførte TV-fakturaen.','Du bokførte TV-fakturaen uten å spørre Tor først.'),
+    it(F.tor===2,'Du undersøkte hvor mye av Solvik-prosjektet som var utført før nyttår.','Du undersøkte ikke hvor mye av Solvik-prosjektet som var utført før nyttår.')]});
+  S.push({name:'Krever dokumentasjon og følger formkravene',rep:'dokumentasjonskravene i bokføringsforskriften og kundetiltak etter hvitvaskingsloven (6091 Regnskapsføreryrket og regnskapsorganisering)',items:[
+    it(F.onboard===1,'Du krevde legitimasjon og oppdragsavtale før du tok imot bilagene til Selma.','Du tok imot bilagene til Selma uten kundekontroll og oppdragsavtale.'),
+    it(F.b1===2,'Du ba om formål og deltakere for restaurantkvitteringen.','Du ba ikke om formål og deltakere for restaurantkvitteringen.'),
+    it(F.b2===1,'Du behandlet kappsaga riktig.','Du behandlet kappsaga feil. Den skulle kostnadsføres direkte med fradrag for mva.')]});
+  S.push({name:'Står imot press',rep:'god regnskapsføringsskikk og grensen mot regnskapsmanipulasjon (6090 Årsregnskap og god regnskapsskikk, og 6091)',items:[
+    it(F.tv===2||F.tv===3,'Du førte ikke TV-en som kontorutstyr, selv om Tor ba om det.','Du førte TV-en som kontorutstyr fordi Tor ba om det.'),
+    it(F.tor!==0,'Du sa ikke ja til å tilbakedatere fakturaen da Tor spurte.','Du sa ja til å tilbakedatere fakturaen da Tor spurte.')].concat(F.tor===0?[]:[
+    it(F.randi===1,'Du sto fast da Randi la press på deg.',F.randi===0?'Du ga etter da Randi la press på deg.':'Du overlot avgjørelsen til Randi i stedet for å stoppe tilbakedateringen.')])});
+  S.push({name:'Viser kunden et lovlig alternativ',rep:'rådgivning og formidling av analyse til klienter (6091 og 6093)',items:[
+    it(F.advice===0,'Du ga Selma et konkret råd som passer risikoen hun tar.',F.advice===1?'Rådet til Selma tok ikke hensyn til risikoen hun tar.':'Du ga ikke Selma noe råd.'),
+    it(F.tvCalled&&F.tv===2,'Du forklarte Tor hvordan TV-kjøpet kan gjøres opp: tilbakebetaling, lønn eller utbytte.','Du forklarte ikke Tor hvordan TV-kjøpet kan gjøres opp på lovlig vis.'),
+    it(F.tor===2||F.randi===1,'Du foreslo riktige tall, ordrereserve og likviditetsbudsjett til banken.','Du foreslo ikke noe alternativ Tor kunne ta med til banken.')]});
+  S.forEach(k=>{const n=k.items.filter(i=>i.ok).length;k.level=n===k.items.length?'good':n===0?'bad':'mid';k.label=n===k.items.length?'Dette viste du i dag':n===0?'Dette bør du øve på':'Delvis';});return S;}
+function reportText(refl){const L=[];L.push('BYRÅET – rapport fra arbeidsdagen');if(playerName)L.push('Navn/kandidat: '+playerName);L.push('');L.push(epilogue());L.push('');
+  L.push('HVA DU VISTE I DAG');profile().forEach(k=>{L.push(k.name+' ['+k.label+']');k.items.forEach(i=>L.push('   '+(i.ok?'+ ':'- ')+i.t));if(k.level!=='good')L.push('   Repeter: '+k.rep);L.push('');});
+  L.push('REFLEKSJON: Hvilket valg ville du gjort annerledes, og hvorfor?');L.push(refl?refl:'(ikke besvart)');L.push('');
+  L.push('VALGENE');LOG.forEach((o,i)=>{L.push((i+1)+'. '+o.title+' ['+VERD[o.v]+']');L.push('   Valg: '+o.choice);if(o.reason)L.push('   Begrunnelse: '+o.reason);L.push('   Læringsutbytte: '+o.lu);L.push('');});
+  L.push('Målerne ved dagens slutt: kundetillit '+M.tillit+', faglig kvalitet '+M.kvalitet+', integritet '+M.integritet+' (skala 0–100).');L.push('Prøveversjon. Det faglige innholdet er ikke kvalitetssikret.');return L.join('\n');}
+function report(){sfx.open();const tn=trustNote();
+  const prof=profile().map(k=>'<div class="fb prof '+k.level+'"><div class="v">'+esc(k.label)+' · '+esc(k.name)+'</div><ul>'+k.items.map(i=>'<li class="'+(i.ok?'ok':'no')+'">'+esc(i.t)+'</li>').join('')+'</ul>'+(k.level!=='good'?'<p><span class="sub">Repeter:</span> '+esc(k.rep)+'</p>':'')+'</div>').join('');
+  showPanel('<h2>Arbeidsdagen er over</h2><p>'+esc(epilogue())+'</p>'+(tn?'<p>'+esc(tn)+'</p>':'')+'<h3>Hva du viste i dag</h3>'+prof+
+   '<h3>Refleksjon</h3><label for="refl">Hvilket valg ville du gjort annerledes, og hvorfor? Svaret kommer med i rapporten.</label><textarea id="refl" maxlength="1200"></textarea>'+
+   '<h3>Rapport til innlevering</h3><p class="sub">Kopier teksten og lim den inn i innleveringen.</p><label for="rep">Rapport</label><textarea id="rep" readonly style="min-height:180px;max-width:100%"></textarea><div class="row"><button class="btn" id="copy" type="button">Kopier rapport</button><button class="btn sec" id="again" type="button">Spill på nytt</button><span class="count" id="copied"></span></div>'+
+   '<h3>Alle valgene dine</h3>'+fbHtml(LOG)+
+   '<p class="sub">Målerne ved dagens slutt: kundetillit '+M.tillit+', faglig kvalitet '+M.kvalitet+', integritet '+M.integritet+'. Tallene bygger på '+LOG.length+' valg og sier ikke hvor godt du kan faget.</p><p class="sub">Prøveversjon. Det faglige innholdet er ikke kvalitetssikret.</p>');
+  $('rep').value=reportText('');
+  $('refl').addEventListener('input',()=>{$('rep').value=reportText($('refl').value.trim());$('copied').textContent='';});
   $('copy').addEventListener('click',()=>{const done=()=>{$('copied').textContent='Kopiert';};const fb=()=>{$('rep').focus();$('rep').select();$('copied').textContent='Teksten er markert. Kopier med Ctrl+C.';};try{navigator.clipboard.writeText($('rep').value).then(done,fb);}catch(e){fb();}});
   $('again').addEventListener('click',()=>location.reload());
 }
