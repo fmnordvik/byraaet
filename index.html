@@ -20,6 +20,7 @@
   --body:'VT323','Lucida Console','Courier New',monospace;
 }
 html,body{height:100%}
+html{overflow-x:hidden}
 body{background:var(--ink);color:var(--text);font-family:var(--body);font-size:22px;line-height:1.15;
   padding-block:6px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));box-sizing:border-box}
 *,*::before,*::after{box-sizing:border-box}
@@ -589,10 +590,10 @@ function report(){sfx.open();const tn=trustNote();
 /* ---------- title and boot ---------- */
 function fit(){const wrap=$('wrap'),st=$('stage'),cs=getComputedStyle(document.body);
   const availW=document.documentElement.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
-  let w=availW;
+  let w=Math.max(Math.min(availW,460),Math.floor(Math.min(availW,(document.documentElement.clientHeight-110)*W/H)));
   for(let pass=0;pass<3;pass++){wrap.style.width=w+'px';wrap.classList.toggle('narrow',w<700);
     const over=wrap.offsetHeight-st.offsetHeight+parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom)+2;
-    let n=Math.floor(Math.min(availW,(window.innerHeight-over)*W/H));n=Math.max(n,Math.min(availW,460));
+    let n=Math.floor(Math.min(availW,(document.documentElement.clientHeight-over)*W/H));n=Math.max(n,Math.min(availW,460));
     if(n===w)break;w=n;}
   wrap.style.width=w+'px';wrap.classList.toggle('narrow',w<700);}
 let titleOpen=false;
