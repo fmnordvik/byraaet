@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Byrået</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=VT323&display=swap">
+<style>
+/* Layout: one game frame. HUD strip on top, pixel world in the middle, dialogue laid over the lower part of the world (stacked under it on phones). */
+:root{
+  color-scheme:dark;
+  --ink:#0f1c26; --panel:#1a2f3d; --panel2:#234256; --line:#3d6079;
+  --text:#e9f0ee; --muted:#9fb6c2; --amber:#f2b84b; --good:#6fcf8e; --bad:#ee7a6a;
+  --paper:#f3ecd6; --paper-ink:#2a2a33; --paper-line:#b9ad8a;
+  --display:'Pixelify Sans','Trebuchet MS',Verdana,sans-serif;
+  --body:'VT323','Lucida Console','Courier New',monospace;
+}
+html,body{height:100%}
+body{background:var(--ink);color:var(--text);font-family:var(--body);font-size:22px;line-height:1.15;
+  padding-block:14px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));box-sizing:border-box}
+*,*::before,*::after{box-sizing:border-box}
+.wrap{margin:0 auto;display:flex;flex-direction:column;gap:10px;max-width:100%}
+.hud{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;background:var(--panel);border:3px solid var(--line);padding:8px 12px}
+.clock{font-family:var(--display);font-weight:700;font-size:22px;color:var(--amber);font-variant-numeric:tabular-nums;white-space:nowrap}
+.obj{flex:1 1 220px;min-width:0;color:var(--text)}
+.obj b{font-weight:400;color:var(--muted)}
+.meters{display:flex;flex-wrap:wrap;gap:6px 14px}
+.meter{display:flex;align-items:center;gap:6px;font-size:19px;color:var(--muted);white-space:nowrap}
+.bar{width:74px;height:12px;background:var(--ink);border:2px solid var(--line)}
+.bar i{display:block;height:100%;background:var(--good);transition:width .4s steps(8)}
+.bar.low i{background:var(--bad)}
+.meter.flash{color:var(--amber)}
+.snd{font-family:var(--body);font-size:19px;background:var(--panel2);color:var(--text);border:2px solid var(--line);padding:2px 8px;cursor:pointer}
+.stage{position:relative;border:3px solid var(--line);background:#000;box-shadow:6px 6px 0 rgba(0,0,0,.35);max-width:100%}
+.stage canvas#cv{display:block;width:100%;height:auto;image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer}
+.hint{position:absolute;left:8px;top:8px;background:var(--ink);border:2px solid var(--amber);color:var(--amber);padding:1px 8px;font-size:20px;pointer-events:none}
+.dialog{position:absolute;left:2%;right:2%;bottom:3%;display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:3px solid var(--text);
+  padding:10px 12px;max-height:72%;overflow:auto;box-shadow:4px 4px 0 rgba(0,0,0,.45);z-index:3}
+.dialog canvas{width:96px;height:96px;flex:none;image-rendering:pixelated;border:2px solid var(--line)}
+.dbody{flex:1;min-width:0}
+.dname{font-family:var(--display);font-weight:600;font-size:18px;color:var(--amber);margin-bottom:2px}
+.dtext{min-height:2.3em;white-space:pre-wrap}
+.dopts{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.dnext{align-self:flex-end;flex:none}
+.btn,.opt{font-family:var(--body);font-size:21px;line-height:1.1;cursor:pointer;border:2px solid var(--ink);padding:6px 12px}
+.btn{background:var(--amber);color:var(--ink);box-shadow:3px 3px 0 rgba(0,0,0,.4)}
+.btn.sec{background:var(--panel2);color:var(--text);border-color:var(--line)}
+.btn:disabled{opacity:.45;cursor:default}
+.opt{background:var(--panel2);color:var(--text);border-color:var(--line);text-align:left}
+.opt:hover,.opt:focus-visible{background:var(--line)}
+.opt .k{color:var(--amber);margin-right:8px}
+.opt.used{opacity:.45}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.panel{position:absolute;inset:0;overflow:auto;background:var(--ink);padding:18px clamp(14px,4%,42px);z-index:2}
+.panel.veil{background:rgba(15,28,38,.80)}
+.panel h1{font-family:var(--display);font-weight:700;font-size:clamp(36px,7vw,60px);line-height:1;margin:0;color:var(--amber);letter-spacing:.04em;text-shadow:4px 4px 0 #000}
+.panel h2{font-family:var(--display);font-weight:600;font-size:26px;margin:0 0 8px;color:var(--amber);text-wrap:balance}
+.panel h3{font-family:var(--display);font-weight:600;font-size:19px;margin:14px 0 4px;color:var(--text)}
+.panel p{margin:6px 0;max-width:68ch}
+.panel .sub{color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+.cols{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.cols>*{min-width:0}
+.cols .left{flex:1 1 260px}.cols .right{flex:1.2 1 300px}
+input[type=text],textarea{font-family:var(--body);font-size:21px;background:var(--ink);color:var(--text);border:2px solid var(--line);padding:6px 8px;width:100%;max-width:560px}
+textarea{min-height:110px;resize:vertical}
+label{display:block;color:var(--muted);margin:8px 0 3px}
+.paper{background:var(--paper);color:var(--paper-ink);padding:14px 16px;border:2px solid var(--paper-line);box-shadow:5px 5px 0 rgba(0,0,0,.45);transform:rotate(-.6deg);max-width:340px}
+.paper .hd{font-family:var(--display);font-weight:700;font-size:20px}
+.paper .ln{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dashed var(--paper-line);padding:2px 0;font-variant-numeric:tabular-nums}
+.paper .tot{font-weight:700;border-bottom:3px double var(--paper-ink)}
+.paper .sm{font-size:18px;opacity:.8}
+.note{background:#f7d774;color:#3a2f10;padding:8px 10px;margin-top:10px;transform:rotate(1.4deg);max-width:230px;box-shadow:3px 3px 0 rgba(0,0,0,.35)}
+.fb{border-left:4px solid var(--line);padding:4px 0 4px 12px;margin:10px 0}
+.fb.good{border-color:var(--good)}.fb.mid{border-color:var(--amber)}.fb.bad{border-color:var(--bad)}
+.fb .v{font-family:var(--display);font-size:17px}
+.fb.good .v{color:var(--good)}.fb.mid .v{color:var(--amber)}.fb.bad .v{color:var(--bad)}
+.tag{display:inline-block;font-size:18px;color:var(--muted);border:1px solid var(--line);padding:0 6px;margin-top:4px}
+.help{color:var(--muted);font-size:19px}
+.count{color:var(--muted);font-size:18px}
+.wrap.narrow .dialog{position:static;max-height:none;margin:0;border-width:3px 0 0;box-shadow:none}
+.wrap.narrow .stage.has-panel canvas#cv,.wrap.narrow .stage.has-panel .hint{display:none}
+.wrap.narrow .panel{position:static}
+.wrap.narrow .dialog canvas{width:64px;height:64px}
+.panel canvas#banner{display:block;width:min(100%,480px);height:auto;image-rendering:pixelated;image-rendering:crisp-edges;border:3px solid var(--line);margin-bottom:12px}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+
+<main class="wrap" id="wrap">
+  <header class="hud">
+    <div class="clock" id="clock">MAN 08:00</div>
+    <div class="obj" id="obj"><b>Mål:</b> Start arbeidsdagen</div>
+    <div class="meters">
+      <div class="meter" id="m-tillit">Kundetillit <span class="bar"><i style="width:50%"></i></span></div>
+      <div class="meter" id="m-kvalitet">Faglig kvalitet <span class="bar"><i style="width:50%"></i></span></div>
+      <div class="meter" id="m-integritet">Integritet <span class="bar"><i style="width:50%"></i></span></div>
+    </div>
+    <button class="snd" id="snd" type="button" aria-pressed="true">Lyd: på</button>
+  </header>
+  <div class="stage" id="stage">
+    <canvas id="cv" width="384" height="208" aria-label="Kontoret til Fjordvik Regnskap AS sett ovenfra"></canvas>
+    <div class="hint" id="hint" hidden></div>
+    <div class="dialog" id="dialog" hidden>
+      <canvas id="face" width="32" height="32"></canvas>
+      <div class="dbody">
+        <div class="dname" id="dname"></div>
+        <div class="dtext" id="dtext"></div>
+        <div class="dopts" id="dopts"></div>
+      </div>
+      <button class="btn dnext" id="dnext" type="button">Videre ▶</button>
+    </div>
+    <div class="panel" id="panel" hidden></div>
+  </div>
+  <div class="help">Gå med piltaster eller WASD, eller trykk dit du vil gå. Snakk og bruk ting med E eller mellomrom. Velg svar med talltastene.</div>
+</main>
+
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const TS=16,COLS=24,ROWS=13,W=384,H=208;
+const cv=$('cv'),g=cv.getContext('2d');g.imageSmoothingEnabled=false;
+const bgc=document.createElement('canvas');bgc.width=W;bgc.height=H;const b=bgc.getContext('2d');
+const R=(c,x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(Math.round(x),Math.round(y),w,h);};
+const esc=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+
+/* ---------- sound ---------- */
+let ac=null,muted=false;
+function beep(f,d,type,v,when){if(muted)return;try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const t=ac.currentTime+(when||0),o=ac.createOscillator(),n=ac.createGain();o.type=type||'square';o.frequency.value=f;n.gain.setValueAtTime(v||0.035,t);n.gain.exponentialRampToValueAtTime(0.0001,t+(d||0.06));o.connect(n);n.connect(ac.destination);o.start(t);o.stop(t+(d||0.06)+0.02);}catch(e){}}
+const sfx={blip:()=>beep(520,0.025,'square',0.012),pick:()=>{beep(660,0.06);beep(880,0.08,'square',0.035,0.06);},up:()=>{beep(523,0.07,'triangle',0.06);beep(784,0.12,'triangle',0.06,0.07);},down:()=>{beep(330,0.09,'sawtooth',0.03);beep(220,0.16,'sawtooth',0.03,0.09);},ring:()=>{for(let i=0;i<4;i++){beep(1320,0.05,'square',0.03,i*0.09);beep(1100,0.05,'square',0.03,i*0.09+0.045);}},open:()=>{beep(392,0.06,'triangle',0.05);beep(523,0.06,'triangle',0.05,0.06);beep(659,0.1,'triangle',0.05,0.12);}};
+$('snd').addEventListener('click',()=>{muted=!muted;$('snd').textContent='Lyd: '+(muted?'av':'på');$('snd').setAttribute('aria-pressed',String(!muted));if(!muted)sfx.pick();});
+
+/* ---------- map ---------- */
+const solidG=[];
+for(let y=0;y<ROWS;y++){solidG.push([]);for(let x=0;x<COLS;x++)solidG[y][x]=y<2||y>11||(x===7&&y!==7)||(x===16&&y!==5);}
+[[2,5],[3,5],[4,5],[2,6],[3,6],[4,6],[0,2],[0,11],[9,4],[10,4],[13,4],[14,4],[13,3],[8,2],[9,2],[15,2],[8,10],[15,11],[12,8],[13,8],[19,4],[20,4],[21,4],[20,3],[22,2],[23,2],[17,11],[10,2],[14,2],[14,11],[23,11],[6,2],[11,4]].forEach(([x,y])=>solidG[y][x]=true);
+
+const PAL={
+  du:{skin:'#e8b990',hair:'#5a3b26',shirt:'#2e86ab',shirt2:'#226a88',pants:'#2b3344',shoe:'#151a22',bg:'#234256'},
+  randi:{skin:'#f0c9a8',hair:'#c9c2b2',shirt:'#8c2f45',shirt2:'#6e2236',pants:'#22303f',shoe:'#151a22',bg:'#4a2a3a',glasses:true,bob:true},
+  jonas:{skin:'#eec3a0',hair:'#c2622d',shirt:'#3f9d6b',shirt2:'#2f7d54',pants:'#3a4654',shoe:'#151a22',bg:'#234a3a',beard:true},
+  selma:{skin:'#c98f66',hair:'#1c1a22',shirt:'#d9a23a',shirt2:'#f3ecd6',pants:'#5a4636',shoe:'#151a22',bg:'#5a4320',long:true,apron:true},
+  tor:{skin:'#e3b08c',hair:'#6b5a48',shirt:'#e8742c',shirt2:'#f2d13b',pants:'#22303f',shoe:'#151a22',bg:'#3a4654',cap:'#f2d13b',stubble:true},
+  ingen:{bg:'#234256'}
+};
+const NAMES={du:'Du',randi:'Randi Fjordvik, daglig leder',jonas:'Jonas, kollega',selma:'Selma Aune, gründer',tor:'Tor Bråten, Bråten Bygg AS (telefon)',ingen:''};
+const npcs=[{id:'randi',x:20,y:3},{id:'jonas',x:13,y:3},{id:'selma',x:3,y:4,present:false}];
+const things={
+  randi:{cells:[[20,3],[19,4],[20,4],[21,4]],label:'Snakk med Randi'},
+  jonas:{cells:[[13,3],[13,4],[14,4]],label:'Snakk med Jonas'},
+  selma:{cells:[[3,4],[2,5],[3,5],[4,5],[2,6],[3,6],[4,6]],label:'Snakk med Selma',present:()=>npcs[2].present},
+  desk:{cells:[[9,4],[10,4]],label:'Bruk pulten din'},
+  coffee:{cells:[[15,2]],label:'Ta en kaffe'}
+};
+const isSolid=(x,y)=>x<0||y<0||x>=COLS||y>=ROWS||solidG[y][x]||(npcs[2].present&&x===3&&y===4);
+
+/* ---------- background art ---------- */
+let seed=11;const rnd=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;};
+function tint(hex,a){const n=parseInt(hex.slice(1),16),c=v=>Math.max(0,Math.min(255,v+a));return 'rgb('+c(n>>16)+','+c(n>>8&255)+','+c(n&255)+')';}
+function drawBg(){
+  const wood=['#bd8f62','#c4976a','#b5875a','#c09265'];
+  for(let y=32;y<192;y+=4){let x=108-Math.floor(rnd()*20);while(x<276){const len=18+Math.floor(rnd()*22);R(b,x,y,len,4,wood[Math.floor(rnd()*4)]);R(b,x,y+3,len,1,'#a67c52');R(b,x+len-1,y,1,3,'#9f7449');x+=len;}}
+  R(b,0,32,112,160,'#4a6783');for(let y=32;y<192;y+=2)for(let x=(y/2%2)*2;x<112;x+=4)R(b,x,y,1,1,'#547391');for(let i=0;i<140;i++)R(b,rnd()*111,32+rnd()*159,1,1,'#3f5a74');
+  R(b,20,58,74,78,'#33506b');R(b,22,60,70,74,'#6d8bab');R(b,24,62,66,70,'#3f5c78');
+  for(let y=2;y<12;y++)for(let x=17;x<24;x++){const px=x*16,py=y*16;R(b,px,py,16,16,['#8a6248','#90684d','#845d44'][Math.floor(rnd()*3)]);R(b,px,py+7,16,1,'#75513a');R(b,px,py+15,16,1,'#75513a');R(b,px+(y%2?3:11),py,1,8,'#75513a');R(b,px+(y%2?11:3),py+8,1,8,'#75513a');R(b,px+5,py+3,3,1,'#9a7256');}
+  R(b,272,32,112,160,'rgba(60,30,20,.08)');
+  // rug in the manager's office
+  R(b,18*16,7*16,80,48,'#a8423f');R(b,18*16+2,7*16+2,76,44,'#d9b36c');R(b,18*16+4,7*16+4,72,40,'#a8423f');R(b,18*16+7,7*16+7,66,34,'#93383a');
+  for(let i=0;i<4;i++){R(b,18*16+13+i*16,7*16+20,8,8,'#d9b36c');R(b,18*16+15+i*16,7*16+22,4,4,'#a8423f');}
+  for(let i=0;i<80;i+=3){R(b,18*16+i,7*16-2,1,2,'#d9b36c');R(b,18*16+i,10*16,1,2,'#d9b36c');}
+  // top wall
+  R(b,0,0,W,32,'#e3e8e2');R(b,0,22,W,10,'#d2dad6');R(b,0,22,W,1,'#b9c5c2');R(b,0,0,W,5,'#2a3b4d');R(b,0,5,W,1,'#b9c5c2');R(b,0,29,W,3,'#8a9aa3');R(b,0,31,W,1,'#5e6f7a');
+  R(b,0,32,W,3,'rgba(0,0,0,.2)');R(b,0,35,W,2,'rgba(0,0,0,.08)');
+  // partitions
+  [[7,7],[16,5]].forEach(([c,door])=>{for(let y=2;y<12;y++){if(y===door){R(b,c*16,y*16,16,16,'#8f7b62');R(b,c*16+4,y*16,8,16,'#7d6a52');continue;}R(b,c*16+12,y*16,3,16,'rgba(0,0,0,.14)');R(b,c*16+4,y*16,8,16,'#cfd8d6');R(b,c*16+4,y*16,2,16,'#eef3f1');R(b,c*16+11,y*16,1,16,'#8a9aa3');if(y%3===0)R(b,c*16+4,y*16+7,8,1,'#b9c5c2');}R(b,c*16+3,0,10,32,'#b9c5c2');R(b,c*16+3,0,10,5,'#2a3b4d');});
+  // bottom wall and entrance
+  R(b,0,189,W,3,'rgba(0,0,0,.14)');R(b,0,192,W,16,'#1c2835');R(b,0,192,W,2,'#3d5266');R(b,11*16,192,32,16,'#6b4a33');R(b,11*16+2,194,13,14,'#855f43');R(b,11*16+17,194,13,14,'#855f43');R(b,11*16+4,196,9,5,'#8fb4c9');R(b,11*16+19,196,9,5,'#8fb4c9');R(b,11*16+13,203,2,2,'#f2b84b');R(b,11*16+17,203,2,2,'#f2b84b');
+  R(b,11*16+2,183,28,8,'#3a4654');R(b,11*16+4,185,24,4,'#4d5d6d');for(let i=0;i<24;i+=3)R(b,11*16+4+i,185,1,4,'#3a4654');
+  // whiteboard
+  R(b,36,8,42,19,'#8a9aa3');R(b,37,9,40,17,'#f6f8f7');R(b,37,26,40,1,'#566676');R(b,60,26,6,2,'#a8322c');R(b,68,26,6,2,'#2e86ab');
+  [[40,21,4,4,'#2e86ab'],[46,18,4,7,'#2e86ab'],[52,15,4,10,'#2e86ab'],[58,19,4,6,'#ee7a6a']].forEach(a=>R(b,...a));
+  for(let i=0;i<9;i++)R(b,65+i,22-i,1,1,'#3f9d6b');R(b,40,12,12,1,'#3a4654');
+  // wall things: calendar, picture, certificates
+  R(b,174,10,9,11,'#f6f8f7');R(b,174,10,9,3,'#a8322c');for(let i=0;i<3;i++)for(let j=0;j<2;j++)R(b,176+i*2,15+j*3,1,1,'#566676');
+  R(b,228,9,14,13,'#3a4654');R(b,230,11,10,9,'#8fc1e3');R(b,230,16,10,4,'#2e6f8f');R(b,232,13,5,4,'#f6f8f7');R(b,231,15,7,2,'#566676');
+  R(b,326,9,14,13,'#c9a24a');R(b,328,11,10,9,'#f3ecd6');R(b,330,13,6,1,'#3a4654');R(b,330,15,6,1,'#3a4654');R(b,333,17,2,2,'#a8423f');
+  // furniture
+  shelf(8,2);shelf(9,2);shelf(22,2);shelf(23,2);cabinet(10,2);cooler(14,2);
+  plant(0,2);plant(0,11);plant(15,11);plant(17,11);
+  // sideboard in the meeting room
+  R(b,96,44,16,3,'rgba(0,0,0,.2)');R(b,96,30,16,15,'#a8743f');R(b,96,30,16,3,'#d9a66b');R(b,97,35,6,8,'#8a5c30');R(b,105,35,6,8,'#8a5c30');R(b,99,23,4,7,'#bfeaf6');R(b,100,21,2,2,'#8fb4c9');R(b,105,26,2,4,'#e9f0ee');R(b,108,26,2,4,'#e9f0ee');
+  // meeting table and chairs
+  for(let i=0;i<3;i++){chair(2+i,4,false);chair(2+i,7,true);}
+  R(b,30,5*16+28,52,3,'rgba(0,0,0,.25)');R(b,30,5*16+1,52,27,'#a8743f');R(b,30,5*16+1,52,23,'#d9a66b');R(b,30,5*16+1,52,1,'#eec48e');R(b,31,5*16+12,50,1,'#cf9b60');
+  R(b,40,5*16+8,10,7,'#3a4654');R(b,41,5*16+9,8,5,'#8fb4c9');R(b,39,5*16+15,12,2,'#566676');R(b,58,5*16+9,5,5,'#f3ecd6');R(b,59,5*16+10,3,3,'#6b4a33');R(b,68,5*16+5,9,11,'#f3ecd6');R(b,69,5*16+7,7,1,'#9fb6c2');R(b,69,5*16+10,7,1,'#9fb6c2');R(b,69,5*16+13,5,1,'#9fb6c2');R(b,78,5*16+12,1,6,'#2e86ab');
+  // desks
+  chair(9,5,true);chair(13,3,false);chair(12,9,true);chair(20,3,false);
+  desk(9,4,2);monitor(9,4,true);phone(10,4);R(b,9*16+13,4*16-6,2,2,'#f7d774');
+  R(b,10*16+13,4*16+8,3,2,'#3a4654');R(b,10*16+14,4*16+1,1,7,'#3a4654');R(b,10*16+11,4*16-3,6,4,'#f2b84b');R(b,10*16+12,4*16+1,4,1,'#fff2c2');
+  R(b,11*16+3,4*16+14,8,2,'rgba(0,0,0,.2)');R(b,11*16+4,4*16+6,6,9,'#566676');R(b,11*16+4,4*16+6,6,1,'#8a9aa3');R(b,11*16+6,4*16+4,3,3,'#f3ecd6');
+  desk(13,4,2);monitor(14,4,false);papers(13,4);R(b,13*16+12,4*16+5,3,4,'#e9f0ee');R(b,13*16+13,4*16+6,1,2,'#6b4a33');
+  desk(12,8,2);monitor(12,8,true);papers(13,8);
+  desk(19,4,3);monitor(21,4,false);papers(19,4);R(b,20*16+11,4*16+4,5,6,'#3f9d6b');R(b,20*16+12,4*16+3,3,1,'#f3ecd6');R(b,20*16+2,4*16+5,7,5,'#22303f');R(b,20*16+3,4*16+6,5,3,'#c9a24a');
+  // coffee machine and printer
+  R(b,15*16+2,2*16+13,12,2,'rgba(0,0,0,.2)');R(b,15*16+2,2*16-6,12,20,'#3a4654');R(b,15*16+2,2*16-6,12,2,'#566676');R(b,15*16+4,2*16-3,8,4,'#1c2530');R(b,15*16+5,2*16-2,3,1,'#6fcf8e');R(b,15*16+5,2*16+5,6,6,'#22303f');R(b,15*16+6,2*16+7,4,4,'#f3ecd6');R(b,15*16+12,2*16+2,1,1,'#ee7a6a');
+  R(b,8*16+1,10*16+14,14,2,'rgba(0,0,0,.2)');R(b,8*16+1,10*16+3,14,11,'#cfd8d6');R(b,8*16+1,10*16+3,14,2,'#eef3f1');R(b,8*16+3,10*16,10,4,'#f6f8f7');R(b,8*16+3,10*16+9,10,2,'#3a4654');R(b,8*16+12,10*16+6,2,1,'#6fcf8e');
+  // coat rack and floor lamp
+  R(b,14*16+4,11*16+12,9,2,'rgba(0,0,0,.25)');R(b,14*16+7,11*16-12,2,24,'#5c3f2b');R(b,14*16+4,11*16+11,8,2,'#3d2a1d');R(b,14*16+3,11*16-12,10,1,'#5c3f2b');R(b,14*16+2,11*16-10,5,12,'#8c2f45');R(b,14*16+3,11*16-10,1,12,'#6e2236');R(b,14*16+9,11*16-9,5,10,'#2b3344');R(b,14*16+9,11*16-6,5,2,'#f2b84b');
+  R(b,23*16+4,11*16+12,9,2,'rgba(0,0,0,.25)');R(b,23*16+7,11*16-10,2,22,'#3a4654');R(b,23*16+4,11*16+11,8,2,'#22303f');R(b,23*16+3,11*16-17,10,8,'#f2d9a0');R(b,23*16+4,11*16-10,8,1,'#fff2c2');R(b,23*16+3,11*16-17,10,1,'#fff2c2');
+}
+function chair(tx,ty,back){const x=tx*16,y=ty*16;R(b,x+3,y+13,10,2,'rgba(0,0,0,.2)');R(b,x+3,y+4,10,9,'#22303f');R(b,x+4,y+5,8,6,'#34485c');if(back)R(b,x+3,y+10,10,4,'#1a2531');else R(b,x+3,y+2,10,3,'#1a2531');}
+function cabinet(tx,ty){const x=tx*16,y=ty*16-8;R(b,x+1,y+22,14,2,'rgba(0,0,0,.2)');R(b,x+1,y,14,22,'#8a9aa3');R(b,x+1,y,14,2,'#b9c5c2');for(let r=0;r<3;r++){R(b,x+2,y+3+r*6,12,5,'#a7b4ba');R(b,x+6,y+5+r*6,4,1,'#566676');}R(b,x+3,y-4,9,4,'#f3ecd6');R(b,x+4,y-6,7,2,'#c0392b');}
+function cooler(tx,ty){const x=tx*16,y=ty*16-10;R(b,x+3,y+24,10,2,'rgba(0,0,0,.2)');R(b,x+4,y,8,9,'#8fd0ee');R(b,x+5,y+1,2,6,'#c9ecfa');R(b,x+3,y+9,10,15,'#e9f0ee');R(b,x+3,y+9,10,2,'#cfd8d6');R(b,x+5,y+14,2,2,'#2e86ab');R(b,x+9,y+14,2,2,'#ee7a6a');R(b,x+4,y+19,8,1,'#8a9aa3');}
+function shelf(tx,ty){const x=tx*16,y=ty*16-12;R(b,x,y+27,16,2,'rgba(0,0,0,.2)');R(b,x,y,16,27,'#5c3f2b');R(b,x+1,y+1,14,25,'#3d2a1d');R(b,x,y,16,1,'#7a5740');const cs=['#c0392b','#2e86ab','#f2b84b','#3f9d6b','#e9f0ee','#8c2f45','#566676'];for(let r=0;r<3;r++){for(let i=0;i<6;i++){const col=cs[(i+r*2+tx)%cs.length],sh=(i*3+r+tx)%3===0?1:0;R(b,x+2+i*2,y+2+r*8+sh,2,6-sh,col);R(b,x+2+i*2,y+4+r*8,2,1,'#f6f8f7');}R(b,x+1,y+8+r*8,14,1,'#5c3f2b');}}
+function plant(tx,ty){const x=tx*16,y=ty*16;R(b,x+3,y+14,10,2,'rgba(0,0,0,.22)');R(b,x+5,y+8,6,7,'#b5563c');R(b,x+4,y+8,8,2,'#cf6a4d');R(b,x+9,y+10,2,5,'#9a4530');R(b,x+3,y-1,10,9,'#3f9d6b');R(b,x+5,y-5,6,5,'#57b97f');R(b,x+1,y+2,3,5,'#2f7d54');R(b,x+12,y+1,3,5,'#2f7d54');R(b,x+7,y+1,2,4,'#7fd49c');R(b,x+4,y-2,2,3,'#7fd49c');R(b,x+10,y+3,2,3,'#2f7d54');R(b,x+6,y-7,2,3,'#3f9d6b');}
+function desk(tx,ty,w){const x=tx*16,y=ty*16;R(b,x,y+15,w*16,2,'rgba(0,0,0,.22)');R(b,x,y+1,w*16,14,'#a8743f');R(b,x,y+1,w*16,10,'#d9a66b');R(b,x,y+1,w*16,1,'#eec48e');R(b,x,y+6,w*16,1,'#cf9b60');R(b,x+1,y+12,3,3,'#8a5c30');R(b,x+w*16-4,y+12,3,3,'#8a5c30');R(b,x+w*8-3,y+12,6,2,'#8a5c30');}
+function monitor(tx,ty,front){const x=tx*16,y=ty*16;R(b,x+2,y-7,12,9,'#1c2530');if(front){R(b,x+3,y-6,10,7,'#4fb6d6');R(b,x+3,y-6,10,1,'#2e86ab');}else{R(b,x+4,y-5,8,5,'#2a3642');R(b,x+7,y-3,2,2,'#566676');}R(b,x+7,y+2,2,2,'#1c2530');R(b,x+5,y+4,6,1,'#1c2530');if(front){R(b,x+3,y+7,10,2,'#e9f0ee');R(b,x+4,y+7,8,1,'#b9c5c2');}}
+function phone(tx,ty){const x=tx*16,y=ty*16;R(b,x+3,y+4,8,5,'#a8322c');R(b,x+2,y+3,10,2,'#ee7a6a');R(b,x+5,y+6,4,2,'#e9f0ee');}
+function papers(tx,ty){const x=tx*16,y=ty*16;R(b,x+3,y+3,8,7,'#f3ecd6');R(b,x+5,y+4,8,7,'#ffffff');R(b,x+6,y+6,5,1,'#9fb6c2');R(b,x+6,y+8,5,1,'#9fb6c2');}
+drawBg();
+
+/* ---------- dynamic art ---------- */
+let clock=480,anim=0;
+const SKY=[[480,[38,48,92],[92,74,120]],[560,[120,170,214],[196,214,226]],[840,[130,184,226],[204,222,232]],[930,[226,140,92],[118,90,140]],[990,[40,40,84],[70,56,104]]];
+function skyAt(m){let a=SKY[0],c=SKY[SKY.length-1];for(let i=0;i<SKY.length-1;i++)if(m>=SKY[i][0]&&m<=SKY[i+1][0]){a=SKY[i];c=SKY[i+1];break;}if(m<=SKY[0][0])c=a;if(m>=SKY[SKY.length-1][0])a=c;const t=c[0]===a[0]?0:(m-a[0])/(c[0]-a[0]);const mix=(p,q)=>'rgb('+p.map((v,i)=>Math.round(v+(q[i]-v)*t)).join(',')+')';return [mix(a[1],c[1]),mix(a[2],c[2])];}
+const dark=()=>clock<540?(540-clock)/60:clock>900?Math.min(1,(clock-900)/90):0;
+const WINS=[[6,22],[84,24],[134,38],[262-58,20],[276,40],[348,30]];
+function drawWindows(){const [top,low]=skyAt(clock),d=dark();
+  WINS.forEach(([x,w])=>{R(g,x-1,7,w+2,21,'#8a9aa3');R(g,x,8,w,7,top);R(g,x,15,w,5,low);
+    const cx=(anim*2+x*3)%(w+20)-10;if(cx>0&&cx<w-6&&d<0.6)R(g,x+cx,10,6,2,'rgba(255,255,255,.75)');
+    for(let i=0;i<w;i++){const hh=Math.round(5+3*Math.sin((x+i)*0.21)+2*Math.sin((x+i)*0.07+1));R(g,x+i,20-hh,1,hh,d>0.5?'#1f2a4a':'#3d5578');if(hh>7)R(g,x+i,20-hh,1,2,d>0.5?'#8a94b8':'#f6f8f7');}
+    R(g,x,20,w,7,d>0.5?'#182544':'#4d7fa8');for(let i=1;i<w;i+=5)R(g,x+((i+Math.floor(anim/2))%w),22+(i%3)*2,3,1,d>0.5?'#2a3b66':'#79a6c9');
+    if(d>0.4)for(let i=3;i<w;i+=7)R(g,x+i,19,1,1,'#f2d13b');
+    R(g,x+Math.floor(w/2),8,1,19,'#8a9aa3');R(g,x-1,27,w+2,1,'#eef3f1');});
+  // wall clock
+  const cx=191,cy=16;R(g,cx-6,cy-6,13,13,'#22303f');R(g,cx-5,cy-5,11,11,'#f6f8f7');const hr=(clock/60)%12*Math.PI/6-Math.PI/2,mn=(clock%60)*Math.PI/30-Math.PI/2;
+  for(let i=1;i<=3;i++)R(g,cx+Math.cos(hr)*i,cy+Math.sin(hr)*i,1,1,'#22303f');for(let i=1;i<=4;i++)R(g,cx+Math.cos(mn)*i,cy+Math.sin(mn)*i,1,1,'#a8322c');R(g,cx,cy,1,1,'#22303f');
+}
+const sprCache={};
+function paintChar(c,p,dir,fr,blink){const X=2,by=(fr===1||fr===3)?-1:0,sw=fr===1?1:fr===3?-1:0,e='#22222a',lL=fr===1?5:6,lR=fr===3?5:6;
+  R(c,X+2,21,3,lL,p.pants);R(c,X+7,21,3,lR,p.pants);R(c,X+5,21,2,2,p.pants);R(c,X+2,21+lL,3,1,p.shoe);R(c,X+7,21+lR,3,1,p.shoe);
+  const T=13+by,th=8-by;R(c,X+1,T,10,th,p.shirt);R(c,X+9,T,2,th,p.shirt2);R(c,X+1,T+th-1,10,1,p.shirt2);
+  if(p.apron){R(c,X+3,T+1,6,th-1,'#f3ecd6');R(c,X+4,T,1,1,'#f3ecd6');R(c,X+7,T,1,1,'#f3ecd6');}
+  R(c,X,T+1+sw,2,5,p.shirt);R(c,X+10,T+1-sw,2,5,p.shirt2);R(c,X,T+6+sw,2,1,p.skin);R(c,X+10,T+6-sw,2,1,p.skin);
+  const Hy=4+by,hl=tint(p.hair,28);R(c,X+2,Hy,8,9,p.skin);R(c,X+9,Hy+2,1,6,tint(p.skin,-18));
+  if(dir==='up'){R(c,X+1,Hy-1,10,8,p.hair);R(c,X+2,Hy+7,8,p.long?5:p.bob?3:1,p.hair);R(c,X+3,Hy,4,1,hl);}
+  else{R(c,X+1,Hy-1,10,3,p.hair);R(c,X+3,Hy-1,4,1,hl);
+    if(dir==='down'){const sl=p.long?10:p.bob?6:2;R(c,X+1,Hy+2,1,sl,p.hair);R(c,X+10,Hy+2,1,sl,p.hair);
+      if(blink){R(c,X+3,Hy+5,2,1,e);R(c,X+7,Hy+5,2,1,e);}else{R(c,X+4,Hy+4,1,2,e);R(c,X+7,Hy+4,1,2,e);}
+      if(p.glasses){R(c,X+3,Hy+3,3,1,e);R(c,X+6,Hy+3,3,1,e);}
+      if(p.beard)R(c,X+3,Hy+7,6,2,p.hair);else R(c,X+5,Hy+7,2,1,'#a8604c');}
+    else{const lf=dir==='left';R(c,lf?X+6:X+1,Hy+2,5,p.long?10:p.bob?6:3,p.hair);R(c,lf?X+3:X+8,Hy+4,1,2,e);if(p.beard)R(c,lf?X+2:X+6,Hy+7,4,2,p.hair);}}
+}
+function sprite(id,dir,fr,blink){const k=id+dir+fr+(blink?'b':'');if(sprCache[k])return sprCache[k];const c=document.createElement('canvas');c.width=16;c.height=30;const x=c.getContext('2d');paintChar(x,PAL[id],dir,fr,blink);
+  try{const im=x.getImageData(0,0,16,30),a=im.data,o=[];for(let y=0;y<30;y++)for(let i=0;i<16;i++){if(a[(y*16+i)*4+3])continue;const nb=(xx,yy)=>xx>=0&&yy>=0&&xx<16&&yy<30&&a[(yy*16+xx)*4+3]>0;if(nb(i-1,y)||nb(i+1,y)||nb(i,y-1)||nb(i,y+1))o.push([i,y]);}o.forEach(([i,y])=>R(x,i,y,1,1,'#17171f'));}catch(err){}
+  return sprCache[k]=c;}
+function drawChar(c,tx,ty,id,dir,fr,blink){tx=Math.round(tx);ty=Math.round(ty);R(c,tx+3,ty+13,10,3,'rgba(0,0,0,.28)');R(c,tx+2,ty+14,12,1,'rgba(0,0,0,.28)');c.drawImage(sprite(id,dir,fr,blink),tx,ty-14);}
+const MOODS=[['Hei! Jeg skal','glad'],['Ja, selvfølgelig','glad'],['Å? Hvorfor','urolig'],['Samboeren min','urolig'],['Surdeig på','glad'],['Det gir mening','glad'],['Ok. Da hefter','urolig'],['Å. Jeg trodde','urolig'],['Ryddig','glad'],['Så enkelt','glad'],['TV-en?','glad'],['Hmf','sur'],['Sånn skal','glad'],['Seriøst','sur'],['Banken vil ha','sur'],['Da ringer jeg','sur'],['Gjør det. Men','sur'],['Topp!','glad'],['Tor ringte','urolig'],['Kan vi ikke finne','urolig'],['... Du har rett','glad'],['God morgen','glad'],['Velkommen!','glad'],['Bra jobbet','glad'],['Takk for hjelpen','glad']];
+const moodFor=t=>{for(const [p,m] of MOODS)if(t.startsWith(p))return m;return 'n';};
+function drawFace(p,mood){const f=$('face').getContext('2d');f.imageSmoothingEnabled=false;const bgc2=p.bg||'#234256';R(f,0,0,32,32,bgc2);R(f,0,0,32,11,tint(bgc2,14));
+  if(!p.skin){R(f,8,6,16,20,'#f3ecd6');R(f,8,6,16,3,'#a8322c');for(let i=0;i<5;i++)R(f,10,12+i*3,12,1,'#b9ad8a');R(f,19,9,1,17,'#ee7a6a');return;}
+  const sk=p.skin,sd=tint(sk,-28),hd=tint(p.hair,-34),hl=tint(p.hair,26),e='#22222a',m='#8a3f36';
+  R(f,3,26,26,6,p.shirt);R(f,5,25,22,1,p.shirt);R(f,24,26,5,6,p.shirt2);R(f,13,21,6,5,sd);
+  if(p.apron){R(f,10,27,12,5,'#f3ecd6');R(f,11,25,1,2,'#f3ecd6');R(f,20,25,1,2,'#f3ecd6');}else if(p.cap)R(f,3,28,26,1,p.shirt2);else{R(f,13,25,3,3,'#f6f8f7');R(f,16,25,3,3,'#e2e8e6');}
+  R(f,9,7,14,15,sk);R(f,10,22,12,1,sk);R(f,8,13,1,3,sd);R(f,23,13,1,3,sd);R(f,21,9,2,12,tint(sk,-12));
+  R(f,8,4,16,5,p.hair);R(f,8,9,2,p.long?17:p.bob?10:3,p.hair);R(f,22,9,2,p.long?17:p.bob?10:3,p.hair);R(f,11,5,6,1,hl);
+  if(p.long){R(f,7,10,1,14,p.hair);R(f,24,10,1,14,p.hair);}
+  R(f,12,13,3,2,'#ffffff');R(f,18,13,3,2,'#ffffff');R(f,13,13,1,2,e);R(f,19,13,1,2,e);
+  if(mood==='sur'){R(f,12,10,2,1,hd);R(f,14,11,1,1,hd);R(f,19,10,2,1,hd);R(f,18,11,1,1,hd);}
+  else if(mood==='urolig'){R(f,12,11,2,1,hd);R(f,14,10,1,1,hd);R(f,19,11,2,1,hd);R(f,18,10,1,1,hd);}
+  else{R(f,12,11,3,1,hd);R(f,18,11,3,1,hd);}
+  R(f,16,15,1,2,sd);
+  if(p.beard){R(f,9,17,14,5,p.hair);R(f,10,22,12,1,p.hair);}
+  if(p.stubble)for(let i=10;i<22;i+=2)R(f,i+(i%4?1:0),21,1,1,'#8a6f5a');
+  if(mood==='glad'){R(f,13,18,1,1,m);R(f,14,18,5,1,'#ffffff');R(f,14,19,5,1,m);R(f,19,18,1,1,m);}
+  else if(mood==='sur'){R(f,14,19,5,1,m);R(f,13,20,1,1,m);R(f,19,20,1,1,m);}
+  else if(mood==='urolig'){R(f,15,19,3,2,m);}
+  else R(f,14,19,5,1,m);
+  if(p.glasses){[11,17].forEach(x=>{R(f,x,12,5,1,e);R(f,x,15,5,1,e);R(f,x,12,1,4,e);R(f,x+4,12,1,4,e);});R(f,16,13,1,1,e);}
+  if(p.cap){R(f,8,2,16,6,p.cap);R(f,6,8,20,1,tint(p.cap,-50));R(f,10,3,6,1,tint(p.cap,40));}
+}
+const FONT={F:'111100110100100',J:'001001001101111',O:'111101101101111',R:'110101110101101',D:'110101101101110',V:'101101101101010',I:'111010010010111',K:'101101110101101',E:'111100110100111',G:'111100101101111',N:'111101101101101',S:'111100111001111',A:'010101111101101',P:'111101111100100'};
+function text5(c,str,x,y,col){for(const ch of str){const gl=FONT[ch];if(gl)for(let i=0;i<15;i++)if(gl[i]==='1')R(c,x+i%3,y+Math.floor(i/3),1,1,col);x+=4;}}
+function drawBanner(){const c=$('banner').getContext('2d');c.imageSmoothingEnabled=false;
+  [['#20264f',0,12],['#34366b',12,10],['#614a82',22,8],['#a8648a',30,6],['#e6976a',36,5]].forEach(([col,y,h])=>R(c,0,y,192,h,col));
+  [[12,4],[40,9],[70,3],[150,6],[178,12],[120,10],[98,5]].forEach(([x,y])=>R(c,x,y,1,1,'#f6f8f7'));
+  for(let i=0;i<192;i++){const hh=Math.round(9+5*Math.sin(i*0.09)+3*Math.sin(i*0.23+2));R(c,i,41-hh,1,hh,'#1c2547');if(hh>12)R(c,i,41-hh,1,2,'#aab2d6');}
+  R(c,0,41,192,13,'#2a3868');for(let i=0;i<24;i++)R(c,(i*37)%188,43+(i%5)*2,4,1,i%3?'#3d4f86':'#e6976a');
+  R(c,0,54,192,18,'#1a2531');R(c,0,54,192,1,'#3d5266');for(let i=0;i<192;i+=8)R(c,i+(i%16?0:3),60+(i%3)*3,5,1,'#243443');
+  R(c,14,30,38,24,'#3a4654');for(let i=0;i<9;i++)R(c,14+i*2,30-i,38-i*4,1,'#2b3344');R(c,22,38,5,6,'#f2d13b');R(c,38,38,5,6,'#1c2530');
+  R(c,142,26,40,28,'#5a4636');R(c,142,23,40,3,'#3d2a1d');R(c,150,34,5,6,'#1c2530');R(c,166,34,5,6,'#f2d13b');R(c,166,44,5,6,'#1c2530');R(c,150,44,5,6,'#1c2530');
+  R(c,54,20,86,34,'#e9e2cf');R(c,54,20,86,1,'#ffffff');R(c,132,20,8,34,'#cfc7b0');for(let i=0;i<12;i++)R(c,52+i*4,19-i,90-i*8,1,'#8c2f45');R(c,52,19,90,1,'#6e2236');
+  for(let r=0;r<2;r++)for(let k=0;k<5;k++){if(r===1&&k===2)continue;const x=60+k*16,y=r?43:22;R(c,x-1,y-1,10,9,'#8a9aa3');R(c,x,y,8,7,(k+r)%3===1?'#2a3642':'#f2d13b');R(c,x+4,y,1,7,'#8a9aa3');}
+  R(c,54,31,86,9,'#1a2f3d');R(c,54,31,86,1,'#f2b84b');R(c,54,39,86,1,'#f2b84b');text5(c,'FJORDVIK REGNSKAP AS',58,33,'#f2b84b');
+  R(c,91,41,12,13,'#6b4a33');R(c,92,42,10,12,'#855f43');R(c,100,48,1,2,'#f2b84b');R(c,89,54,16,2,'#566676');
+  R(c,46,30,1,24,'#22303f');R(c,44,28,5,3,'#f2d13b');
+  const gr=c.createRadialGradient(46,30,1,46,30,16);gr.addColorStop(0,'rgba(255,220,140,.5)');gr.addColorStop(1,'rgba(255,220,140,0)');c.fillStyle=gr;c.fillRect(30,14,32,32);
+  c.drawImage(sprite('du','left',1,false),160,28);
+}
+
+/* ---------- player and movement ---------- */
+const P={x:11,y:11,tx:11,ty:11,dir:'up',moving:false,prog:0,path:[],goal:null,step:0};
+const DIRS={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
+const KEYMAP={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',w:'up',s:'down',a:'left',d:'right',W:'up',S:'down',A:'left',D:'right'};
+const held=[];
+let started=false,waiting=null,ambientBusy=false,target=null,ringing=false;
+const canMove=()=>started&&$('dialog').hidden&&$('panel').hidden&&!ambientBusy;
+const present=id=>!things[id].present||things[id].present();
+function adjacentThing(){for(const id in things){if(!present(id))continue;for(const [cx,cy] of things[id].cells)if(Math.abs(cx-P.x)+Math.abs(cy-P.y)===1)return id;}return null;}
+function faceThing(id){let best=null,bd=99;for(const [cx,cy] of things[id].cells){const d=Math.abs(cx-P.x)+Math.abs(cy-P.y);if(d<bd){bd=d;best=[cx,cy];}}if(!best)return;const dx=best[0]-P.x,dy=best[1]-P.y;P.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down');}
+function bfs(goalFn){const prev=new Map(),q=[[P.x,P.y]];prev.set(P.x+','+P.y,null);while(q.length){const [x,y]=q.shift();if(goalFn(x,y)){const path=[];let k=x+','+y;while(prev.get(k)){path.unshift(k.split(',').map(Number));k=prev.get(k);}return path;}for(const d in DIRS){const nx=x+DIRS[d][0],ny=y+DIRS[d][1],k=nx+','+ny;if(prev.has(k)||isSolid(nx,ny))continue;prev.set(k,x+','+y);q.push([nx,ny]);}}return null;}
+function goTo(tx,ty){if(!canMove())return;let id=null;for(const k in things)if(present(k)&&things[k].cells.some(c=>c[0]===tx&&c[1]===ty))id=k;
+  if(id){const path=bfs((x,y)=>things[id].cells.some(c=>Math.abs(c[0]-x)+Math.abs(c[1]-y)===1));if(path){P.path=path;P.goal=id;}}
+  else if(!isSolid(tx,ty)){const path=bfs((x,y)=>x===tx&&y===ty);if(path){P.path=path;P.goal=null;}}}
+cv.addEventListener('click',e=>{const r=cv.getBoundingClientRect();goTo(Math.floor((e.clientX-r.left)/r.width*COLS),Math.floor((e.clientY-r.top)/r.height*ROWS));});
+function interact(id){if(!canMove())return;faceThing(id);if(waiting&&waiting.id===id){const w=waiting;waiting=null;w.res();return;}if(ambient[id]){ambientBusy=true;ambient[id]().then(()=>{closeDialog();ambientBusy=false;});}}
+function update(dt){anim+=dt*4;
+  if(P.moving){P.prog+=dt*7.5;if(P.prog>=1){P.x=P.tx;P.y=P.ty;P.moving=false;P.prog=0;P.step++;}}
+  if(!P.moving){if(!canMove()){P.path=[];P.goal=null;return;}
+    let d=null;if(held.length){P.path=[];P.goal=null;d=held[held.length-1];}
+    else if(P.path.length){const [nx,ny]=P.path.shift();for(const k in DIRS)if(P.x+DIRS[k][0]===nx&&P.y+DIRS[k][1]===ny)d=k;}
+    if(d){P.dir=d;const nx=P.x+DIRS[d][0],ny=P.y+DIRS[d][1];if(!isSolid(nx,ny)){P.tx=nx;P.ty=ny;P.moving=true;P.prog=0;}else P.path=[];}
+    else if(P.goal){const id=P.goal;P.goal=null;interact(id);}}
+}
+let lastHint='';
+const vig=document.createElement('canvas');vig.width=W;vig.height=H;(function(){const v=vig.getContext('2d'),gr=v.createRadialGradient(W/2,H/2+10,80,W/2,H/2+10,240);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(6,10,24,.32)');v.fillStyle=gr;v.fillRect(0,0,W,H);})();
+function glow(x,y,r,rgb,a){if(a<=0.004)return;const gr=g.createRadialGradient(x,y,1,x,y,r);gr.addColorStop(0,'rgba('+rgb+','+a.toFixed(3)+')');gr.addColorStop(1,'rgba('+rgb+',0)');g.fillStyle=gr;g.fillRect(x-r,y-r,r*2,r*2);}
+function render(){g.drawImage(bgc,0,0);drawWindows();const d=dark(),dayl=1-d;
+  if(dayl>0.05){g.fillStyle='rgba(255,244,205,'+(0.11*dayl).toFixed(3)+')';WINS.forEach(([x,w])=>{g.beginPath();g.moveTo(x,32);g.lineTo(x+w,32);g.lineTo(x+w+14,82);g.lineTo(x+14,82);g.closePath();g.fill();});}
+  const fl=Math.floor(anim)%3;[[9,4],[12,8]].forEach(([x,y])=>{R(g,x*16+4+fl*2,y*16-4,3,1,'#bfeaf6');R(g,x*16+4,y*16-2+fl,6,1,'#8fd6ea');});
+  const st=Math.floor(anim*1.5)%4;R(g,15*16+7+(st%2),2*16+3-st,1,2,'rgba(255,255,255,.55)');
+  if(ringing&&Math.floor(anim*3)%2){R(g,10*16-1,4*16+1,2,2,'#f2d13b');R(g,10*16+12,4*16,2,2,'#f2d13b');R(g,10*16+6,4*16-2,2,2,'#f2d13b');}
+  const list=npcs.filter(n=>n.present!==false).map(n=>({y:n.y*16,f:()=>drawChar(g,n.x*16,n.y*16,n.id,'down',0,Math.floor(anim*2+n.x*7)%19===0)}));
+  const px=(P.x+(P.tx-P.x)*P.prog)*16,py=(P.y+(P.ty-P.y)*P.prog)*16;
+  list.push({y:py,f:()=>drawChar(g,px,py,'du',P.dir,P.moving?((P.step%2)*2+(P.prog<0.55?1:0)):0,false)});
+  list.sort((a,c)=>a.y-c.y).forEach(o=>o.f());
+  if(d>0){R(g,0,32,W,H-32,'rgba(18,22,66,'+(0.34*d).toFixed(3)+')');R(g,0,0,W,32,'rgba(18,22,66,'+(0.14*d).toFixed(3)+')');}
+  g.globalCompositeOperation='lighter';
+  [[56,112],[190,84],[190,150],[328,112]].forEach(([x,y])=>glow(x,y,74,'255,214,150',0.04+0.15*d));
+  glow(10*16+14,4*16+4,28,'255,200,110',0.10+0.26*d);glow(23*16+8,11*16-8,36,'255,214,150',0.08+0.26*d);
+  [[9,4],[12,8]].forEach(([x,y])=>glow(x*16+8,y*16+2,20,'110,200,255',0.05+0.14*d));
+  g.globalCompositeOperation='source-over';g.drawImage(vig,0,0);
+  if(target&&present(target)){const [cx,cy]=things[target].cells[0],bob=Math.floor(anim*1.5)%2;const mx=cx*16+5,my=cy*16-27-bob;R(g,mx-1,my-1,8,13,'#0f1c26');R(g,mx,my,6,11,'#f2b84b');R(g,mx+2,my+1,2,6,'#0f1c26');R(g,mx+2,my+8,2,2,'#0f1c26');}
+  const near=canMove()?adjacentThing():null,h=near?'E: '+things[near].label:'';
+  if(h!==lastHint){lastHint=h;$('hint').textContent=h;$('hint').hidden=!h;}
+}
+let last=0;function frame(t){const dt=Math.min(0.05,(t-last)/1000||0);last=t;update(dt);render();requestAnimationFrame(frame);}
+
+/* ---------- HUD ---------- */
+const M={tillit:50,kvalitet:50,integritet:50};
+function setClock(m){clock=m;const hh=String(Math.floor(m/60)).padStart(2,'0'),mm=String(m%60).padStart(2,'0');$('clock').textContent='MAN '+hh+':'+mm;}
+function tick(m){setClock(clock+m);}
+function setObj(text,id){$('obj').innerHTML='<b>Mål:</b> '+esc(text);target=id||null;}
+function adj(d){let net=0;for(const k in d){M[k]=Math.max(0,Math.min(100,M[k]+d[k]));net+=d[k];const el=$('m-'+k);el.querySelector('i').style.width=M[k]+'%';el.querySelector('.bar').classList.toggle('low',M[k]<35);el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),900);}if(net>0)sfx.up();else if(net<0)sfx.down();}
+
+/* ---------- dialogue ---------- */
+let advance=null,typer=null,optHandlers=null;
+function openDialog(who,mood){$('dialog').hidden=false;$('dname').textContent=NAMES[who]||'';$('dname').hidden=!NAMES[who];drawFace(PAL[who]||PAL.ingen,mood||'n');}
+function closeDialog(){$('dialog').hidden=true;$('dopts').innerHTML='';advance=null;optHandlers=null;clearInterval(typer);typer=null;}
+function type(text,done){const el=$('dtext');clearInterval(typer);let i=0;el.textContent='';const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const fin=()=>{clearInterval(typer);typer=null;el.textContent=text;if(done)done();};if(reduce){fin();return fin;}
+  typer=setInterval(()=>{i+=2;el.textContent=text.slice(0,i);if(i%6===0)sfx.blip();if(i>=text.length)fin();},18);return fin;}
+function say(who,text){return new Promise(res=>{openDialog(who,moodFor(text));$('dopts').innerHTML='';$('dnext').hidden=false;optHandlers=null;const fin=type(text);
+  advance=()=>{if(typer){fin();return;}advance=null;res();};});}
+function choose(who,text,options){return new Promise(res=>{openDialog(who);$('dnext').hidden=true;advance=null;const box=$('dopts');box.innerHTML='';
+  type(text,()=>{optHandlers=[];options.forEach((o,i)=>{const label=typeof o==='string'?o:o.t;const bt=document.createElement('button');bt.type='button';bt.className='opt'+(o.used?' used':'');bt.innerHTML='<span class="k">'+(i+1)+'</span>'+esc(label);
+    const h=()=>{sfx.pick();optHandlers=null;box.innerHTML='';res(i);};bt.addEventListener('click',h);optHandlers.push(h);box.appendChild(bt);});});});}
+$('dnext').addEventListener('click',()=>{if(advance)advance();});
+document.addEventListener('keydown',e=>{const tag=(document.activeElement&&document.activeElement.tagName)||'';if(tag==='TEXTAREA'||tag==='INPUT')return;
+  if(KEYMAP[e.key]){const d=KEYMAP[e.key];if(!held.includes(d))held.push(d);if(canMove())e.preventDefault();return;}
+  if(optHandlers&&/^[1-9]$/.test(e.key)){const h=optHandlers[+e.key-1];if(h){e.preventDefault();h();}return;}
+  if(e.key==='e'||e.key==='E'||e.key===' '||e.key==='Enter'){if(tag==='BUTTON')return;if(advance){e.preventDefault();advance();return;}if(canMove()){const id=adjacentThing();if(id){e.preventDefault();interact(id);}}}});
+document.addEventListener('keyup',e=>{const d=KEYMAP[e.key];if(d){const i=held.indexOf(d);if(i>=0)held.splice(i,1);}});
+window.addEventListener('blur',()=>{held.length=0;});
+const waitFor=id=>new Promise(res=>{waiting={id,res};});
+
+/* ---------- panels ---------- */
+function showPanel(html,veil){const p=$('panel');p.className='panel'+(veil?' veil':'');p.innerHTML=html;p.hidden=false;$('stage').classList.add('has-panel');p.scrollTop=0;return p;}
+function hidePanel(){$('panel').hidden=true;$('panel').innerHTML='';$('stage').classList.remove('has-panel');}
+const clicked=sel=>new Promise(res=>{const el=$('panel').querySelector(sel);el.addEventListener('click',()=>{sfx.pick();res();},{once:true});});
+function askReason(n,title,choice){return new Promise(res=>{showPanel('<h2>'+esc(title)+'</h2><p class="sub">Du valgte: '+esc(choice)+'</p><label for="reason-'+n+'">Begrunn valget kort, slik du ville skrevet det i oppdragsdokumentasjonen. Vis gjerne til regelverk.</label><textarea id="reason-'+n+'" maxlength="900"></textarea><div class="count" id="rc">Minst 20 tegn</div><div class="row"><button class="btn" id="rsave" type="button" disabled>Lagre begrunnelse</button><button class="btn sec" id="rskip" type="button">Hopp over</button></div>');
+  const ta=$('reason-'+n);ta.addEventListener('input',()=>{const k=ta.value.trim().length;$('rsave').disabled=k<20;$('rc').textContent=k<20?'Minst 20 tegn ('+k+')':k+' tegn';});
+  $('rsave').addEventListener('click',()=>{sfx.pick();const v=ta.value.trim();hidePanel();res(v);});$('rskip').addEventListener('click',()=>{hidePanel();res('');});ta.focus();});}
+const LOG=[];
+function logItem(o){LOG.push(o);}
+const VERD={good:'Godt valg',mid:'Delvis',bad:'Svakt valg'};
+function fbHtml(items){return items.map(o=>'<div class="fb '+o.v+'"><div class="v">'+VERD[o.v]+' · '+esc(o.title)+'</div><p><span class="sub">Du valgte:</span> '+esc(o.choice)+'</p><p>'+esc(o.why)+'</p>'+(o.reason?'<p><span class="sub">Din begrunnelse:</span> '+esc(o.reason)+'</p>':'')+'<span class="tag">'+esc(o.lu)+'</span></div>').join('');}
+async function feedback(title,from){showPanel('<h2>'+esc(title)+'</h2>'+fbHtml(LOG.slice(from))+'<div class="row"><button class="btn" id="fbok" type="button">Tilbake til kontoret</button></div>');await clicked('#fbok');hidePanel();}
+
+/* ---------- ambient interactions ---------- */
+let stage=0,coffees=0;
+const ambient={
+  jonas:async()=>{const lines=['Velkommen! Kaffemaskinen står borte ved veggen. Den er det viktigste verktøyet vi har.','Nye kunder er hyggelige. Husk at vi ikke kan begynne å føre for noen før kundekontrollen og oppdragsavtalen er på plass.','Bråten-bilagene, ja. Tor er grei, men han tøyer strikken. Spør heller én gang for mye.','Tor står for en femdel av omsetningen vår. Randi liker ikke at vi krangler med ham. Det betyr ikke at han har rett.','Ferdig for dagen? Skriv ned hva du gjorde og hvorfor. Det er det du blir glad for å ha om et år.'];await say('jonas',lines[Math.min(stage,lines.length-1)]);},
+  coffee:async()=>{coffees++;tick(5);await say('ingen',coffees===1?'Du tar en kopp kaffe. Den er bedre enn ventet.':coffees<4?'Enda en kopp. Klokka går.':'Du har drukket nok kaffe i dag.');},
+  desk:async()=>{await say('ingen','Innboksen er tom akkurat nå.');},
+  randi:async()=>{await say('randi',stage<4?'Si fra hvis du står fast. Jeg sitter her.':'Bra jobbet i dag.');},
+  selma:async()=>{await say('selma','Takk for hjelpen så langt!');}
+};
+
+/* ---------- the day ---------- */
+const F={};let playerName='';
+async function day(){
+  await say('ingen','Mandag i november, klokka 08:00. Det er første uka di som regnskapsfører hos Fjordvik Regnskap AS.');
+  closeDialog();setObj('Snakk med Randi på kontoret til høyre','randi');
+  await waitFor('randi');
+  await say('randi','God morgen! Fint at du er her. Du får tre ting i dag.');
+  await say('randi','Klokka ni kommer Selma Aune. Hun skal starte bakeri og vil ha råd om selskapsform. Hun venter på møterommet.');
+  await say('randi','Etterpå ligger det bilag fra Bråten Bygg AS på pulten din. Tor Bråten er en av de største kundene våre, så vær nøye.');
+  await say('randi','Og husk: du fører ikke bare tall. Kundene kommer til oss fordi de vil ha råd.');
+  closeDialog();stage=1;npcs[2].present=true;setClock(540);sfx.open();setObj('Møt Selma Aune på møterommet til venstre','selma');
+  await waitFor('selma');await case1();
+  stage=2;npcs[2].present=false;setClock(Math.max(clock,630));setObj('Gå til pulten din og før bilagene fra Bråten Bygg','desk');
+  await waitFor('desk');await case2();
+  stage=3;setClock(Math.max(clock,840));ringing=true;sfx.ring();const ringT=setInterval(()=>{if(ringing&&canMove())sfx.ring();},2600);setObj('Telefonen ringer. Ta den på pulten din','desk');
+  await waitFor('desk');ringing=false;clearInterval(ringT);await case3();
+  stage=4;setClock(960);setObj('Arbeidsdagen er over',null);report();
+}
+
+async function case1(){const from=LOG.length;
+  await say('selma','Hei! Jeg skal åpne bakeri i sentrum, Aune Surdeig. Naboen min sier at jeg må ha AS fordi det gir lavere skatt. Stemmer det?');
+  const opts=['AS. Det er nesten alltid det beste valget.','Det kommer an på situasjonen din. Kan jeg stille noen spørsmål først?','Enkeltpersonforetak. Det er billigst og enklest å starte.'];
+  const a=await choose('du','Hva svarer du?',opts);
+  if(a===1){adj({kvalitet:8,tillit:5});await say('selma','Ja, selvfølgelig. Spør i vei.');}
+  else{adj({kvalitet:-10});await say('selma','Å? Hvorfor det? Du vet jo ikke noe om planene mine ennå.');await say('du','Det har du rett i. La meg stille noen spørsmål først.');}
+  logItem({title:'Råd om selskapsform: første svar',choice:opts[a],v:a===1?'good':'bad',why:a===1?'Et råd må bygge på kundens faktiske situasjon. Du kartla før du konkluderte.':'Du konkluderte før du kjente risiko, finansiering og behov. Rådet kan bli riktig, men bare ved flaks.',lu:'6093 · kan gi råd til klienter fra oppstart til avslutning av en bedrift'});
+  const qs=[
+    {k:'laan',t:'Hva må du investere, og hvordan skal du finansiere det?',r:'Jeg må låne 600 000 kroner til ovn og innredning. Og jeg binder meg til en leiekontrakt på fem år.'},
+    {k:'ansatte',t:'Skal du ha ansatte?',r:'To på deltid fra første dag. Jeg klarer ikke å stå i butikken og bake samtidig.'},
+    {k:'privat',t:'Hvordan er privatøkonomien din? Eier du bolig?',r:'Samboeren min og jeg eier huset sammen. Det er det jeg er mest redd for å miste hvis dette går galt.'},
+    {k:'overskudd',t:'Hva venter du av overskudd de første årene?',r:'Lite de to første årene, tror jeg. Men jeg må ta ut en vanlig lønn for å klare meg.'},
+    {k:'ek',t:'Hvor mye egne penger kan du skyte inn?',r:'Jeg har spart 150 000 kroner.'},
+    {k:'brod',t:'Hva slags brød skal du bake?',r:'Surdeig på gammelt korn! Spelt, emmer og svedjerug. Du må komme innom og smake.'}];
+  const facts=[];let left=3;
+  while(left>0){const list=qs.filter(q=>!q.done);const i=await choose('du','Du har tid til '+left+(left===1?' spørsmål til.':' spørsmål til.'),list.map(q=>q.t).concat(['Jeg har det jeg trenger.']));
+    if(i===list.length)break;const q=list[i];q.done=true;left--;tick(10);facts.push(q.k);await say('selma',q.r);if(q.k==='brod')adj({tillit:4});else adj({kvalitet:3});}
+  const risk=facts.some(k=>k==='laan'||k==='privat'||k==='ansatte');
+  const ropts=['Jeg anbefaler aksjeselskap.','Jeg anbefaler enkeltpersonforetak.','Dette kan jeg ikke gi råd om. Du bør snakke med en advokat.'];
+  const r=await choose('du','Selma ser spent på deg. Hva anbefaler du?',ropts);closeDialog();
+  const reason=await askReason(1,'Begrunn rådet til Selma',ropts[r]);
+  F.advice=r;
+  if(r===0){adj({kvalitet:risk?10:4,tillit:4});await say('selma','Det gir mening. Da går jeg for AS.');}
+  else if(r===1){adj({kvalitet:-8});await say('selma','Ok. Da hefter jeg vel for alt selv, da? Det må jeg tenke på.');}
+  else{adj({kvalitet:-4,tillit:-8});await say('selma','Å. Jeg trodde det var sånt dere kunne hjelpe med.');}
+  logItem({title:'Råd om selskapsform: anbefalingen',choice:ropts[r],reason,v:r===0?(risk?'good':'mid'):'bad',
+    why:(r===0?(risk?'Rådet følger av det du fant ut. ':'Rådet er forsvarlig, men du spurte ikke om det som avgjør saken: lån, leiekontrakt, ansatte og bolig. '):r===1?'Med lån på 600 000 kroner, fem års leiekontrakt og ansatte er personlig ansvar en stor risiko for Selma. ':'Valg av selskapsform er vanlig rådgivning for en regnskapsfører. Å sende kunden videre uten grunn svekker tilliten. ')+
+    'I et AS hefter eieren som hovedregel bare for innskutt kapital, og minstekravet til aksjekapital er 30 000 kroner. I et enkeltpersonforetak hefter hun personlig for all gjeld. Som ansatt i eget AS får hun også samme rettigheter som andre arbeidstakere. Et godt råd nevner også ulempene: AS har flere formelle krav, og banken kan kreve personlig kausjon for lånet, slik at ansvarsbegrensningen ikke gjelder fullt ut. Rådet bør gis skriftlig.',
+    lu:'6093 · kan gi råd til klienter fra oppstart til avslutning av en bedrift'});
+  await say('selma','En ting til. Kan dere ikke bare ta alt papirarbeidet fra i dag? Jeg har en bunke kvitteringer i veska.');
+  const oopts=['Klart, gi meg bunken, så starter vi i dag.','Gjerne. Først må jeg kontrollere legitimasjonen din, og vi må ha en skriftlig oppdragsavtale.'];
+  const o=await choose('du','Hva svarer du?',oopts);F.onboard=o;
+  if(o===1){adj({integritet:8,kvalitet:8});await say('selma','Ryddig. Jeg har passet med meg.');}
+  else{adj({integritet:-10,kvalitet:-8,tillit:3});await say('selma','Så enkelt! Her er de.');}
+  logItem({title:'Oppstart av kundeforholdet',choice:oopts[o],v:o===1?'good':'bad',why:'Regnskapsførere er rapporteringspliktige etter hvitvaskingsloven og skal gjennomføre kundetiltak før kundeforholdet etableres. Regnskapsførerloven krever skriftlig oppdragsavtale. Avtalen beskytter også deg, fordi den viser hva du har påtatt deg og hva kunden selv har ansvar for.',lu:'6091 · kan anvende regler om rettigheter og plikter og god regnskapsføringsskikk, herunder risiko- og hvitvaskingsregelverk'});
+  closeDialog();await feedback('Tilbakemelding: møtet med Selma',from);
+}
+
+const BILAG=[
+ {title:'Bilag 1 av 3',paper:'<div class="hd">BRYGGA MAT &amp; VIN</div><div class="sm">Org.nr. 987 654 321 MVA · 14.11.</div><div class="ln"><span>Mat, 4 kuverter</span><span>3 400,00</span></div><div class="ln"><span>Vin</span><span>1 400,00</span></div><div class="ln tot"><span>Sum inkl. mva</span><span>4 800,00</span></div><div class="sm">Betalt med firmakort ****4471</div>',note:'',
+  q:'Kortkvittering fra restaurant. Det følger ingen forklaring med.',
+  o:['Bokfør som representasjon med fradrag for inngående mva.','Bokfør som møtekostnad uten å spørre.','Be Tor opplyse formålet og hvem som deltok før du bokfører.','Avvis bilaget og la være å bokføre det.'],ok:2,
+  why:'Dokumentasjon av bevertning skal vise formålet og hvem som deltok (bokføringsforskriften § 5-10). Uten det kan du ikke vurdere om kostnaden er fradragsberettiget. Det er uansett ikke fradrag for inngående mva på servering og representasjon (merverdiavgiftsloven § 8-3). Kostnaden er betalt av selskapet og skal bokføres, så å avvise bilaget løser ingenting.',
+  lu:'6091 · kan behandle og registrere transaksjoner og virksomhetshendelser'},
+ {title:'Bilag 2 av 3',paper:'<div class="hd">VERKTØYHUSET AS</div><div class="sm">Faktura 20417 · Org.nr. 912 345 678 MVA</div><div class="sm">Kunde: Bråten Bygg AS</div><div class="ln"><span>Kapp- og gjærsag</span><span>6 250,00</span></div><div class="ln"><span>Mva 25 %</span><span>1 562,50</span></div><div class="ln tot"><span>Å betale</span><span>7 812,50</span></div>',note:'',
+  q:'Faktura for en kappsag til verkstedet. Fakturaen har alle opplysninger.',
+  o:['Aktiver saga som driftsmiddel og avskriv den.','Kostnadsfør direkte med fradrag for inngående mva.','Kostnadsfør direkte uten fradrag for mva.'],ok:1,
+  why:'Saga er til bruk i den avgiftspliktige virksomheten, og fakturaen oppfyller kravene til salgsdokument. Da er det fradrag for inngående mva. Kostprisen er under grensen på 30 000 kroner for betydelige driftsmidler (skatteloven § 14-40), så den kostnadsføres direkte, for eksempel på konto 6500 Motordrevet verktøy.',
+  lu:'6018 · kan beregne korrekt merverdiavgift med henvisning til hjemmel'},
+ {title:'Bilag 3 av 3',paper:'<div class="hd">ELEKTROLAGERET</div><div class="sm">Faktura 88102 · Org.nr. 923 456 789 MVA</div><div class="sm">Kunde: Bråten Bygg AS<br>Levert til: Tor Bråten, Granlia 12</div><div class="ln"><span>TV 65 tommer</span><span>11 992,00</span></div><div class="ln"><span>Mva 25 %</span><span>2 998,00</span></div><div class="ln tot"><span>Å betale</span><span>14 990,00</span></div>',note:'Kontorutstyr. Før det på kontoret. – Tor',
+  q:'Faktura for en TV. Den er levert til Tors privatadresse.',
+  o:['Bokfør som kontorutstyr med fradrag for mva, slik Tor ber om.','Ring Tor og spør hvor TV-en står og hva den brukes til.','Bokfør som privat uttak uten å spørre.'],ok:1,why:'',lu:''}
+];
+async function case2(){const from=LOG.length;
+  for(let n=0;n<BILAG.length;n++){const B=BILAG[n];
+    showPanel('<h2>Bråten Bygg AS · '+B.title+'</h2><div class="cols"><div class="left"><div class="paper">'+B.paper+'</div>'+(B.note?'<div class="note">'+esc(B.note)+'</div>':'')+'</div><div class="right"><p>'+esc(B.q)+'</p><p class="sub">Hva gjør du?</p><div class="dopts" id="bo"></div><div id="bfb"></div></div></div>');
+    const i=await new Promise(res=>{optHandlers=[];B.o.forEach((t,k)=>{const bt=document.createElement('button');bt.type='button';bt.className='opt';bt.innerHTML='<span class="k">'+(k+1)+'</span>'+esc(t);const h=()=>{sfx.pick();optHandlers=null;res(k);};bt.addEventListener('click',h);optHandlers.push(h);$('bo').appendChild(bt);});});
+    $('bo').innerHTML='<p><span class="sub">Du valgte:</span> '+esc(B.o[i])+'</p>';tick(25);
+    if(n<2){const good=i===B.ok;adj({kvalitet:good?8:-8});logItem({title:B.title+': '+(n===0?'restaurantkvittering':'kappsag'),choice:B.o[i],v:good?'good':'bad',why:B.why,lu:B.lu});
+      $('bfb').innerHTML='<div class="fb '+(good?'good':'bad')+'"><div class="v">'+(good?'Riktig behandlet':'Ikke riktig')+'</div><p>'+esc(B.why)+'</p></div><div class="row"><button class="btn" id="bnext" type="button">Neste bilag</button></div>';
+      await clicked('#bnext');}
+    else{let v,why,choice=B.o[i],reason='';
+      if(i===1){hidePanel();
+        await say('tor','TV-en? Den står hjemme i stua. Men jeg ser jo på byggeprogrammer, he he. Bare før den på firmaet.');
+        const t=['Greit, jeg fører den som kontorutstyr.','Jeg fører den som kontorutstyr, men uten fradrag for mva.','Det er en privat kostnad. Selskapet får ikke fradrag, og du må betale den tilbake eller ta den som lønn eller utbytte.'];
+        const c=await choose('du','Hva svarer du Tor?',t);closeDialog();choice='Ringte Tor. '+t[c];reason=await askReason(2,'Begrunn behandlingen av TV-fakturaen',t[c]);F.tv=c;
+        if(c===2){adj({integritet:10,kvalitet:8,tillit:-3});v='good';await say('tor','Hmf. Greit. Jeg overfører pengene i kveld.');}
+        else if(c===0){adj({integritet:-15,kvalitet:-8,tillit:3});v='bad';await say('tor','Sånn skal det være!');}
+        else{adj({integritet:-5,kvalitet:-5});v='bad';await say('tor','Jaja, bedre enn ingenting.');}
+        closeDialog();}
+      else if(i===0){F.tv=0;adj({integritet:-15,kvalitet:-8,tillit:3});v='bad';}
+      else{F.tv=3;adj({kvalitet:2,tillit:-5});v='mid';}
+      why=(v==='good'?'Du avklarte fakta før du bokførte, og du forklarte konsekvensen for kunden. ':v==='mid'?'Konklusjonen er trolig riktig, men du bokførte uten å avklare fakta med kunden. Leveringsadressen er et varsel, ikke et bevis. ':'En TV i eierens stue er en privat kostnad. Å føre den som kontorutstyr gir uriktig regnskap og uriktig skatte- og mva-grunnlag. Det gjelder også om du dropper mva-fradraget. ')+
+        'Private kostnader gir verken skattefradrag eller mva-fradrag for selskapet. Når selskapet har betalt, må beløpet føres som en fordring på Tor som han gjør opp, eller behandles som lønn eller utbytte. En fordring som blir stående, kan bli regnet som lån til aksjonær, som skattlegges som utbytte (skatteloven § 10-11).';
+      logItem({title:'Bilag 3 av 3: TV levert privat',choice,reason,v,why,lu:'6018 · forstår betydningen av korrekt og lojal angivelse av grunnlaget for skatt og merverdiavgift'});}
+  }
+  hidePanel();await feedback('Tilbakemelding: bilagene fra Bråten Bygg',from);
+}
+
+async function case3(){const from=LOG.length;
+  await say('tor','Hei, det er Tor. Jeg trenger en tjeneste. Banken vil se foreløpige tall for i fjor før de gir oss byggelånet. Svaret må inn på fredag.');
+  await say('tor','Vi fakturerte Solvik-prosjektet i januar, 480 000 kroner. Kan du ikke bare datere fakturaen til 31. desember? Jobben var jo nesten ferdig.');
+  const o=['Greit, jeg daterer den til 31. desember.','Nei. Det kan jeg ikke gjøre.','Jeg kan ikke endre datoen. Men hvor mye av arbeidet var faktisk utført før nyttår?','Jeg må snakke med Randi før jeg svarer.'];
+  const a=await choose('du','Hva svarer du?',o);F.tor=a;let firstReason='';
+  if(a===0){closeDialog();firstReason=await askReason(3,'Begrunn svaret til Tor',o[0]);adj({integritet:-30,kvalitet:-15,tillit:5});F.backdated=true;await say('tor','Topp! Jeg visste du var til å stole på.');}
+  else{
+    if(a===1){adj({integritet:10,tillit:-8});await say('tor','Seriøst? Det er jo bare en dato.');}
+    else if(a===2){adj({integritet:12,kvalitet:10,tillit:-2});await say('tor','Ærlig talt? Vi startet rett før jul. Det meste ble gjort i januar.');await say('du','Da er inntekten opptjent i år, og fakturaen skal vise når arbeidet faktisk ble levert. Jeg kan hjelpe deg med noe annet til banken: riktige tall, ordrereserven og et likviditetsbudsjett.');await say('tor','Banken vil ha et pent resultat, ikke et budsjett.');}
+    else{await say('tor','Gjør det. Men jeg ringer henne selv også.');}
+    closeDialog();if(a!==3)firstReason=await askReason(3,'Begrunn svaret til Tor',o[a]);
+    if(a!==3)await say('tor','Da ringer jeg Randi. Ha det.');
+  }
+  logItem({title:'Tor vil tilbakedatere en faktura',choice:o[a],reason:firstReason,v:a===0?'bad':a===2?'good':'mid',
+    why:(a===0?'Du gikk med på å lage et regnskap som viser inntekt i feil år. ':a===1?'Du sa nei, og det er riktig. Du kunne i tillegg ha undersøkt fakta og vist Tor en lovlig vei til det han trenger. ':a===2?'Du sa nei til datoen, undersøkte hva som faktisk var utført og tilbød et lovlig alternativ. ':'Å spørre lederen er lov, men svaret på selve spørsmålet er klart, og ansvaret for oppdraget kan du ikke gi fra deg. ')+
+    'Inntekt skal resultatføres når den er opptjent (regnskapsloven § 4-1), og salgsdokumentet skal vise når leveringen skjedde (bokføringsforskriften § 5-1-1). En faktura med uriktig dato for å gi banken et bedre bilde er regnskapsmanipulasjon. En regnskapsfører som medvirker, bryter god regnskapsføringsskikk og risikerer både autorisasjonen og erstatningsansvar overfor banken.',
+    lu:'6090 · har kjennskap til etiske regnskapsfaglige problemstillinger, herunder grensen mot regnskapsmanipulasjon'});
+  if(a!==0){closeDialog();setObj('Randi vil snakke med deg','randi');await waitFor('randi');tick(20);
+    await say('randi','Tor ringte. Han sier han bytter byrå hvis vi ikke hjelper ham med banken. Han står for en femdel av omsetningen vår.');
+    await say('randi','Kan vi ikke finne en pragmatisk løsning på den fakturaen?');
+    const ro=['Ok. Jeg daterer den om.','Nei. Det er regnskapsmanipulasjon, og det er vår autorisasjon som står på spill. Jeg foreslår at vi tilbyr Tor riktige tall med ordrereserve og likviditetsbudsjett, og at jeg dokumenterer saken.','Da får du gjøre det selv.'];
+    const rr=await choose('du','Hva svarer du Randi?',ro);closeDialog();F.randi=rr;const reason=await askReason(4,'Begrunn svaret til Randi',ro[rr]);
+    if(rr===0){F.backdated=true;adj({integritet:-25,kvalitet:-12});await say('randi','Fint. Da er den saken ute av verden.');}
+    else if(rr===1){adj({integritet:12,kvalitet:8,tillit:6});await say('randi','... Du har rett. Jeg skulle ikke ha spurt. Jeg ringer Tor selv og tilbyr ham pakken til banken.');}
+    else{adj({integritet:-8,kvalitet:-5});await say('randi','Greit. Jeg tar det herfra.');}
+    logItem({title:'Press fra daglig leder',choice:ro[rr],reason,v:rr===1?'good':rr===0?'bad':'mid',
+      why:(rr===1?'Du sto fast, forklarte risikoen for byrået og kom med et alternativ som løser kundens egentlige behov. ':rr===0?'Du ga etter for press fra lederen. Ansvaret for det du fører, er fortsatt ditt. ':'Du unngikk å gjøre det selv, men du stoppet det ikke, og du vet ikke hva som blir gjort på et oppdrag du arbeider på. ')+
+      'Kravene til god regnskapsføringsskikk gjelder uansett hvor viktig kunden er for byrået. Når du sier nei, bør du samtidig vise hva du kan gjøre: banken trenger grunnlag for en kredittvurdering, og det kan dere levere med riktige tall. Skriv ned hva som ble spurt om, hva du svarte og hvorfor.',
+      lu:'6366 · kan identifisere og analysere etiske dilemmaer og foreta godt begrunnede valg'});
+  }
+  closeDialog();await feedback('Tilbakemelding: telefonen fra Tor',from);
+}
+
+/* ---------- report ---------- */
+function epilogue(){if(F.backdated)return 'Slik kunne det gått: Tre måneder senere oppdager banken at fakturadatoen ikke stemmer med timelistene. Lånet blir sagt opp, og Fjordvik Regnskap må forklare seg for Finanstilsynet.';
+  if(F.randi===1)return 'Slik kunne det gått: Tor fikk lånet på riktige tall, med ordrereserve og likviditetsbudsjett som vedlegg. Han er fortsatt kunde.';
+  return 'Slik kunne det gått: Randi ordnet saken med Tor på egen hånd. Du vet ikke hva som ble gjort, og du arbeider fortsatt på oppdraget.';}
+function reportText(){const L=[];L.push('BYRÅET – rapport fra arbeidsdagen');if(playerName)L.push('Navn/kandidat: '+playerName);L.push('Kundetillit '+M.tillit+' · Faglig kvalitet '+M.kvalitet+' · Integritet '+M.integritet+' (skala 0–100)');L.push('');
+  LOG.forEach((o,i)=>{L.push((i+1)+'. '+o.title+' ['+VERD[o.v]+']');L.push('   Valg: '+o.choice);if(o.reason)L.push('   Begrunnelse: '+o.reason);L.push('   Læringsutbytte: '+o.lu);L.push('');});
+  L.push(epilogue());L.push('');L.push('Prøveversjon. Det faglige innholdet er ikke kvalitetssikret.');return L.join('\n');}
+function report(){const good=LOG.filter(o=>o.v==='good').length;sfx.open();
+  showPanel('<h2>Arbeidsdagen er over</h2><p>'+good+' av '+LOG.length+' valg var gode. Kundetillit '+M.tillit+', faglig kvalitet '+M.kvalitet+', integritet '+M.integritet+'.</p><p>'+esc(epilogue())+'</p><h3>Valgene dine</h3>'+fbHtml(LOG)+
+   '<h3>Rapport til innlevering</h3><p class="sub">Kopier teksten og lim den inn i innleveringen.</p><label for="rep">Rapport</label><textarea id="rep" readonly style="min-height:180px;max-width:100%"></textarea><div class="row"><button class="btn" id="copy" type="button">Kopier rapport</button><button class="btn sec" id="again" type="button">Spill på nytt</button><span class="count" id="copied"></span></div><p class="sub">Prøveversjon. Det faglige innholdet er ikke kvalitetssikret.</p>');
+  $('rep').value=reportText();
+  $('copy').addEventListener('click',()=>{const done=()=>{$('copied').textContent='Kopiert';};const fb=()=>{$('rep').focus();$('rep').select();$('copied').textContent='Teksten er markert. Kopier med Ctrl+C.';};try{navigator.clipboard.writeText($('rep').value).then(done,fb);}catch(e){fb();}});
+  $('again').addEventListener('click',()=>location.reload());
+}
+
+/* ---------- title and boot ---------- */
+function fit(){const wrap=$('wrap'),avail=wrap.parentElement.clientWidth-(parseFloat(getComputedStyle(document.body).paddingLeft)+parseFloat(getComputedStyle(document.body).paddingRight));
+  let s=Math.floor(avail/W);const hs=Math.floor((window.innerHeight-150)/H);if(hs>=2)s=Math.min(s,hs);s=Math.min(s,4);
+  wrap.style.width=s>=2?(W*s+6)+'px':'100%';wrap.classList.toggle('narrow',avail<700);}
+window.addEventListener('resize',fit);fit();
+function title(){showPanel('<canvas id="banner" width="192" height="72" aria-hidden="true"></canvas><h1>BYRÅET</h1><p style="font-size:26px">En arbeidsdag hos Fjordvik Regnskap AS</p><p class="sub">Du er ny regnskapsfører. I dag møter du en gründer som vil ha råd, en bunke bilag og en kunde som ber om en tjeneste. Valgene dine påvirker kundetillit, faglig kvalitet og integritet. En runde tar 20–30 minutter.</p><label for="pname">Navn eller kandidatnummer (valgfritt, kommer med i rapporten)</label><input type="text" id="pname" maxlength="60" autocomplete="off"><div class="row"><button class="btn" id="go" type="button">Start dagen ▶</button></div><p class="sub">Prøveversjon. Det faglige innholdet er ikke kvalitetssikret.</p>',true);drawBanner();
+  $('go').addEventListener('click',()=>{playerName=$('pname').value.trim();sfx.open();hidePanel();started=true;day();});}
+requestAnimationFrame(frame);
+if(location.hash==='#demo'){started=true;P.x=P.tx=20;P.y=P.ty=5;npcs[2].present=true;setClock(600);setObj('Møt Selma Aune på møterommet til venstre','selma');choose('du','Selma ser spent på deg. Hva anbefaler du?',['Jeg anbefaler aksjeselskap.','Jeg anbefaler enkeltpersonforetak.','Dette kan jeg ikke gi råd om. Du bør snakke med en advokat.']);}
+else title();
+})();
+</script>
+
+</body>
+</html>
